@@ -1,10 +1,15 @@
-# postcss moderate CVE inside next.js internals - no fix without breaking next.js
+# postcss moderate CVE inside next.js internals
 GHSA-qx2v-qp2m-jg93
 
-# tar CVEs in npm's own bundled packages - not fixable from app level
+# tar/cross-spawn/glob/minimatch CVEs in npm's own bundled packages - not fixable from app level
 CVE-2026-23745
 CVE-2026-23950
 CVE-2026-24842
 CVE-2026-26960
 CVE-2026-29786
 CVE-2026-31802
+CVE-2024-21538
+CVE-2025-64756
+CVE-2026-26996
+CVE-2026-27903
+CVE-2026-27904
