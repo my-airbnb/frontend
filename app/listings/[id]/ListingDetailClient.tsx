@@ -399,7 +399,7 @@ export default function ListingDetailClient({ id }: Props) {
           {/* Description */}
           <div className="pb-6 border-b border-gray-200">
             <h3 className="text-xl font-semibold text-gray-900 mb-4">About this place</h3>
-            <p className="text-gray-700 leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: listing.description }} />
+            <p className="text-gray-700 leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: listing.description.replace(/<[^>]*>/g, "") }} />
           </div>
 
           {/* Amenities */}
