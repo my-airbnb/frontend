@@ -1,0 +1,161 @@
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
+import apiClient from '@/lib/axios'
+import { Listing, ListingFilters, CreateListingPayload } from '@/types'
+
+export interface ListingsPage {
+  content: Listing[]
+  totalElements: number
+  totalPages: number
+  number: number
+  size: number
+}
+
+// Keep old name for backward compatibility
+type ListingsResponse = ListingsPage
+
+const useListings = (filters?: ListingFilters) => {
+  const queryClient = useQueryClient()
+
+  const {
+    data,
+    isLoading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ['listings', filters],
+    queryFn: async () => {
+      const params = new URLSearchParams()
+      if (filters?.city) params.append('city', filters.city)
+      if (filters?.minPrice !== undefined) params.append('minPrice', String(filters.minPrice))
+      if (filters?.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice))
+      if (filters?.checkIn) params.append('checkIn', filters.checkIn)
+      if (filters?.checkOut) params.append('checkOut', filters.checkOut)
+      if (filters?.guests) params.append('guests', String(filters.guests))
+      if (filters?.type) params.append('type', filters.type)
+
+      const response = await apiClient.get<ListingsResponse | Listing[]>(
+        `/listings?${params.toString()}`
+      )
+      // Handle both paginated and array responses
+      if (Array.isArray(response.data)) {
+        return response.data
+      }
+      return (response.data as ListingsResponse).content || []
+    },
+  })
+
+  const createListingMutation = useMutation({
+    mutationFn: async (payload: CreateListingPayload): Promise<Listing> => {
+      const response = await apiClient.post<Listing>('/listings', payload)
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['listings'] })
+      queryClient.invalidateQueries({ queryKey: ['host-listings'] })
+    },
+  })
+
+  return {
+    listings: data || [],
+    isLoading,
+    error,
+    refetch,
+    createListing: createListingMutation.mutateAsync,
+    isCreating: createListingMutation.isPending,
+    createError: createListingMutation.error,
+  }
+}
+
+export const useListing = (id: string) => {
+  return useQuery({
+    queryKey: ['listing', id],
+    queryFn: async () => {
+      const response = await apiClient.get<Listing>(`/listings/${id}`)
+      return response.data
+    },
+    enabled: !!id,
+  })
+}
+
+export const useHostListings = () => {
+  return useQuery({
+    queryKey: ['host-listings'],
+    queryFn: async () => {
+      const response = await apiClient.get<Listing[] | ListingsResponse>('/listings/host/me')
+      if (Array.isArray(response.data)) {
+        return response.data
+      }
+      return (response.data as ListingsResponse).content || []
+    },
+  })
+}
+
+// Elasticsearch-powered full-text search — used for suggestions when normal search returns 0 results
+export const useListingSearch = (query: string, enabled = true) => {
+  return useQuery({
+    queryKey: ['listing-search', query],
+    queryFn: async () => {
+      const response = await apiClient.get<Listing[]>(`/listings/search?query=${encodeURIComponent(query)}`)
+      return response.data || []
+    },
+    enabled: enabled && !!query && query.length > 1,
+    staleTime: 30_000,
+  })
+}
+
+export const useListingsInfinite = (filters?: ListingFilters) => {
+  return useInfiniteQuery<ListingsPage>({
+    queryKey: ['listings-infinite', filters],
+    queryFn: async ({ pageParam }) => {
+      const params = new URLSearchParams()
+      if (filters?.city) params.append('city', filters.city)
+      if (filters?.minPrice !== undefined) params.append('minPrice', String(filters.minPrice))
+      if (filters?.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice))
+      if (filters?.checkIn) params.append('checkIn', filters.checkIn)
+      if (filters?.checkOut) params.append('checkOut', filters.checkOut)
+      if (filters?.guests) params.append('guests', String(filters.guests))
+      if (filters?.type) params.append('type', filters.type)
+      params.append('page', String(pageParam ?? 0))
+      params.append('size', '12')
+      const response = await apiClient.get<ListingsPage | Listing[]>(`/listings?${params.toString()}`)
+      // Backend may return plain array or Spring Page object
+      if (Array.isArray(response.data)) {
+        const arr = response.data as Listing[]
+        return { content: arr, totalElements: arr.length, totalPages: 1, number: 0, size: arr.length }
+      }
+      return response.data as ListingsPage
+    },
+    getNextPageParam: (lastPage) =>
+      lastPage.number < lastPage.totalPages - 1 ? lastPage.number + 1 : undefined,
+    initialPageParam: 0,
+  })
+}
+
+export const useUpdateListing = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, payload }: { id: string; payload: Partial<CreateListingPayload> }): Promise<Listing> => {
+      const response = await apiClient.put<Listing>(`/listings/${id}`, payload)
+      return response.data
+    },
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: ['listing', id] })
+      queryClient.invalidateQueries({ queryKey: ['host-listings'] })
+    },
+  })
+}
+
+export const useDeleteListing = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string): Promise<void> => {
+      await apiClient.delete(`/listings/${id}`)
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['host-listings'] })
+      queryClient.invalidateQueries({ queryKey: ['listings-infinite'] })
+    },
+  })
+}
+
+export default useListings
