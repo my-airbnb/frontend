@@ -1,9 +1,10 @@
 import ListingDetailClient from './ListingDetailClient'
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
-export default function ListingPage({ params }: Props) {
-  return <ListingDetailClient id={params.id} />
+export default async function ListingPage({ params }: Props) {
+  const { id } = await params
+  return <ListingDetailClient id={id} />
 }
