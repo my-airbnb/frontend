@@ -1,2 +1,10 @@
 # postcss moderate CVE inside next.js internals - no fix without breaking next.js
 GHSA-qx2v-qp2m-jg93
+
+# tar CVEs in npm's own bundled packages - not fixable from app level
+CVE-2026-23745
+CVE-2026-23950
+CVE-2026-24842
+CVE-2026-26960
+CVE-2026-29786
+CVE-2026-31802
