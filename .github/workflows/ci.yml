@@ -80,3 +80,38 @@ jobs:
           IMAGE=ghcr.io/my-airbnb/frontend:${{ steps.tag.outputs.TAG }}
           docker build -t $IMAGE .
           docker push $IMAGE
+
+  # ---- 5. Update K8s Manifest ----
+  update-k8s-manifest:
+    name: Update K8s Manifest
+    runs-on: ubuntu-latest
+    needs: push-to-ghcr
+    if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout k8s-manifests
+        uses: actions/checkout@v4
+        with:
+          repository: my-airbnb/k8s-manifests
+          token: ${{ secrets.GH_PAT }}
+          ref: infra
+
+      - name: Set image tag
+        id: tag
+        run: |
+          if [ "${{ github.ref }}" == "refs/heads/main" ]; then
+            echo "TAG=prod-${{ github.sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "TAG=dev-${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update deployment image
+        run: |
+          sed -i "s|image: ghcr.io/my-airbnb/frontend:.*|image: ghcr.io/my-airbnb/frontend:${{ steps.tag.outputs.TAG }}|" apps/frontend/deployment.yaml
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/frontend/deployment.yaml
+          git commit -m "chore: update frontend image to ${{ steps.tag.outputs.TAG }}"
+          git push
