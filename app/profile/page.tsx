@@ -9,20 +9,13 @@ import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { useUpdateProfile } from '@/hooks/useAuth'
 
-const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || ''
-const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ''
-
 async function uploadAvatar(file: File): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-    { method: 'POST', body: formData }
-  )
+  const res = await fetch('/api/upload', { method: 'POST', body: formData })
   if (!res.ok) throw new Error('Upload failed')
   const data = await res.json()
-  return data.secure_url as string
+  return data.url as string
 }
 
 export default function ProfilePage() {
@@ -58,10 +51,6 @@ export default function ProfilePage() {
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      toast.error('Photo upload not configured.')
-      return
-    }
     setUploadingAvatar(true)
     try {
       const url = await uploadAvatar(file)
