@@ -10,30 +10,20 @@ import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
 import useListings from '@/hooks/useListings'
 
-const CLOUDINARY_CLOUD_NAME = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || ''
-const CLOUDINARY_UPLOAD_PRESET = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || ''
-
-async function uploadToCloudinary(file: File): Promise<string> {
-  if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-    throw new Error('Cloudinary is not configured. Check NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME and NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET.')
-  }
+async function uploadToServer(file: File): Promise<string> {
   const formData = new FormData()
   formData.append('file', file)
-  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET)
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
-    { method: 'POST', body: formData }
-  )
+  const res = await fetch('/api/upload', { method: 'POST', body: formData })
   if (!res.ok) {
     let msg = `Upload failed (${res.status})`
     try {
       const err = await res.json()
-      if (err?.error?.message) msg = err.error.message
+      if (err?.error) msg = err.error
     } catch {}
     throw new Error(msg)
   }
   const data = await res.json()
-  return data.secure_url as string
+  return data.url as string
 }
 
 const LISTING_TYPES = [
@@ -141,14 +131,10 @@ export default function NewListingPage() {
 
   const handlePhotoFiles = async (files: FileList | null) => {
     if (!files || files.length === 0) return
-    if (!CLOUDINARY_CLOUD_NAME || !CLOUDINARY_UPLOAD_PRESET) {
-      setUploadError('Photo upload is not configured. Listing will be created without photos.')
-      return
-    }
     setUploading(true)
     setUploadError('')
     try {
-      const uploads = await Promise.all(Array.from(files).map(uploadToCloudinary))
+      const uploads = await Promise.all(Array.from(files).map(uploadToServer))
       setForm((prev) => ({ ...prev, photos: [...prev.photos, ...uploads] }))
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Some photos failed to upload.'
