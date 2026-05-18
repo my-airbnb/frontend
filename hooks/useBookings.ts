@@ -1,6 +1,6 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/axios'
-import { Booking, CreateBookingPayload } from '@/types'
+import { Booking, BlockedDateRange, CreateBookingPayload } from '@/types'
 import useAuthStore from '@/store/authStore'
 
 export const useBookings = () => {
@@ -12,6 +12,7 @@ export const useBookings = () => {
       return Array.isArray(response.data) ? response.data : []
     },
     enabled: !!user?.email,
+    retry: false,
   })
 }
 
@@ -132,6 +133,7 @@ export const useAllListingBookings = (listingIds: string[]) => {
 }
 
 export const useBlockedDates = (listingId: string) => {
+  const { isAuthenticated } = useAuthStore()
   return useQuery({
     queryKey: ['blocked-dates', listingId],
     queryFn: async () => {
@@ -139,9 +141,10 @@ export const useBlockedDates = (listingId: string) => {
         `/bookings?listingId=${listingId}&status=CONFIRMED`
       )
       const arr = Array.isArray(response.data) ? response.data : []
-      return arr.map((b) => ({ checkIn: b.checkIn, checkOut: b.checkOut }))
+      return arr.map((b): BlockedDateRange => ({ checkIn: b.checkIn, checkOut: b.checkOut }))
     },
-    enabled: !!listingId,
+    enabled: !!listingId && isAuthenticated,
     staleTime: 60_000,
+    retry: false,
   })
 }
