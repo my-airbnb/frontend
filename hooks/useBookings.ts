@@ -132,6 +132,7 @@ export const useAllListingBookings = (listingIds: string[]) => {
   return {
     data: results.flatMap((r) => r.data ?? []),
     isLoading: results.some((r) => r.isLoading),
+    isError: results.some((r) => r.isError),
   }
 }
 

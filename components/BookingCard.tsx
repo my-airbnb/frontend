@@ -34,7 +34,7 @@ const BookingCard = ({ booking }: BookingCardProps) => {
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
   const { data: existingReviews } = useListingReviews(booking.listingId || '')
   const alreadyReviewed = reviewSubmitted || (existingReviews?.some(
-    (r) => r.bookingId === booking.id && r.reviewerId === user?.id
+    (r) => r.bookingId === booking.id && r.reviewerId === user?.email
   ) ?? false)
 
   const formatDate = (dateStr: string) => {

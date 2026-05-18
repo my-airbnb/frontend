@@ -1,24 +1,21 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { useState, useCallback, useEffect } from 'react'
-import { MapPin, Users, Star, ArrowLeft, CircleCheck as CheckCircle, ChevronLeft, ChevronRight, X, LayoutGrid, Bed, Bath, Loader as Loader2 } from 'lucide-react'
+import { MapPin, Users, Star, ArrowLeft, CircleCheck as CheckCircle, Bed, Bath, Loader as Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Separator } from '@/components/ui/separator'
-import { Textarea } from '@/components/ui/textarea'
 import { useListing } from '@/hooks/useListings'
-import { useListingReviews, useReviewStats, useCreateReview } from '@/hooks/useReviews'
+import { useListingReviews, useReviewStats } from '@/hooks/useReviews'
 import { useGetUserByEmail } from '@/hooks/useAuth'
 import { useSendMessage } from '@/hooks/useChat'
 import { useBookings } from '@/hooks/useBookings'
 import BookingWidget from '@/components/BookingWidget'
+import PhotoGallery from '@/components/listing/PhotoGallery'
+import ReviewsSection from '@/components/listing/ReviewsSection'
 import { useRouter } from 'next/navigation'
 import useAuthStore from '@/store/authStore'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
 import { stripHtml } from '@/lib/api-utils'
 
 const ListingMap = dynamic(() => import('@/components/ListingMap'), { ssr: false })
@@ -42,42 +39,10 @@ export default function ListingDetailClient({ id }: Props) {
   const { data: reviews, isLoading: reviewsLoading } = useListingReviews(id)
   const { data: reviewStats } = useReviewStats('LISTING', id)
   const { data: myBookings } = useBookings()
-  const { mutateAsync: createReview, isPending: submittingReview } = useCreateReview()
   const { mutateAsync: sendMessage, isPending: startingChat } = useSendMessage()
   const { data: hostUser, isLoading: hostLoading } = useGetUserByEmail(listing?.hostEmail ?? '')
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [lightboxIndex, setLightboxIndex] = useState(0)
-  const [mobilePhotoIndex, setMobilePhotoIndex] = useState(0)
-  const [reviewRating, setReviewRating] = useState(5)
-  const [reviewComment, setReviewComment] = useState('')
-  const [reviewSubmitted, setReviewSubmitted] = useState(false)
 
   const completedBooking = myBookings?.find((b) => b.listingId === id && b.status === 'COMPLETED')
-  const alreadyReviewed = reviews?.some((r) => r.reviewerId === user?.id)
-
-  const openLightbox = useCallback((index: number) => { setLightboxIndex(index); setLightboxOpen(true) }, [])
-  const closeLightbox = useCallback(() => setLightboxOpen(false), [])
-  const prevPhoto = useCallback((e: React.MouseEvent, total: number) => { e.stopPropagation(); setLightboxIndex((i) => (i - 1 + total) % total) }, [])
-  const nextPhoto = useCallback((e: React.MouseEvent, total: number) => { e.stopPropagation(); setLightboxIndex((i) => (i + 1) % total) }, [])
-
-  useEffect(() => {
-    if (!lightboxOpen) return
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setLightboxOpen(false) }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [lightboxOpen])
-
-  const handleSubmitReview = async () => {
-    if (!completedBooking) return
-    try {
-      await createReview({ bookingId: completedBooking.id, listingId: id, revieweeId: listing?.hostId, ratingOverall: reviewRating, comment: reviewComment })
-
-      setReviewSubmitted(true)
-      toast.success('Review submitted!')
-    } catch {
-      toast.error('Failed to submit review.')
-    }
-  }
 
   const handleContactHost = async () => {
     if (!listing) return
@@ -121,7 +86,9 @@ export default function ListingDetailClient({ id }: Props) {
         <div className="flex items-center gap-1">
           <Star className="h-4 w-4 fill-foreground text-foreground" />
           <span className="font-medium text-foreground">
-            {reviewStats?.totalReviews && reviewStats.averageRating != null ? `${reviewStats.averageRating.toFixed(2)} · ${reviewStats.totalReviews} review${reviewStats.totalReviews !== 1 ? 's' : ''}` : 'New'}
+            {reviewStats?.totalReviews && reviewStats.averageRating != null
+              ? `${reviewStats.averageRating.toFixed(2)} · ${reviewStats.totalReviews} review${reviewStats.totalReviews !== 1 ? 's' : ''}`
+              : 'New'}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -136,87 +103,10 @@ export default function ListingDetailClient({ id }: Props) {
         )}
       </div>
 
-      {/* Photo gallery */}
       <div className="mb-8">
-        {/* Mobile: swipeable */}
-        <div className="md:hidden relative rounded-2xl overflow-hidden aspect-[4/3]">
-          <Image src={photos[mobilePhotoIndex]} alt={listing.title} fill className="object-cover" sizes="100vw" priority />
-          {photos.length > 1 && (
-            <>
-              <button onClick={() => setMobilePhotoIndex((i) => (i - 1 + photos.length) % photos.length)} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-background/90 rounded-full shadow-md">
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button onClick={() => setMobilePhotoIndex((i) => (i + 1) % photos.length)} className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-background/90 rounded-full shadow-md">
-                <ChevronRight className="h-5 w-5" />
-              </button>
-              <div className="absolute bottom-3 right-3 bg-black/50 text-white text-xs font-medium px-2.5 py-1 rounded-full">
-                {mobilePhotoIndex + 1} / {photos.length}
-              </div>
-            </>
-          )}
-          <button onClick={() => openLightbox(mobilePhotoIndex)} className="absolute bottom-3 left-3 bg-card text-foreground text-xs font-semibold px-3 py-1.5 rounded-xl shadow border border-border flex items-center gap-1.5">
-            <LayoutGrid className="h-3.5 w-3.5" />All photos
-          </button>
-        </div>
-
-        {/* Desktop: grid */}
-        <div className="hidden md:grid relative grid-cols-2 gap-2 rounded-2xl overflow-hidden max-h-[500px]">
-          <div className="relative row-span-2 col-span-1 cursor-pointer group" onClick={() => openLightbox(0)}>
-            <Image src={photos[0]} alt={listing.title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="50vw" priority />
-          </div>
-          {photos.slice(1, 5).map((photo, i) => (
-            <div key={i} className="relative aspect-[4/3] cursor-pointer group" onClick={() => openLightbox(i + 1)}>
-              <Image src={photo} alt={`${listing.title} photo ${i + 2}`} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="25vw" />
-            </div>
-          ))}
-          {photos.length === 1 && (
-            <>
-              <div className="relative aspect-[4/3] bg-muted" /><div className="relative aspect-[4/3] bg-muted" />
-            </>
-          )}
-          {photos.length > 1 && (
-            <button onClick={() => openLightbox(0)} className="absolute bottom-4 right-4 bg-card border border-border text-foreground text-sm font-medium px-4 py-2 rounded-xl shadow-md hover:bg-muted transition-colors flex items-center gap-2">
-              <LayoutGrid className="h-4 w-4" />Show all {photos.length} photos
-            </button>
-          )}
-        </div>
+        <PhotoGallery photos={photos} title={listing.title} />
       </div>
 
-      {/* Lightbox */}
-      {lightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center" onClick={closeLightbox}>
-          <button onClick={closeLightbox} className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white">
-            <X className="h-6 w-6" />
-          </button>
-          <div className="absolute top-4 left-1/2 -translate-x-1/2 text-white/80 text-sm font-medium">
-            {lightboxIndex + 1} / {photos.length}
-          </div>
-          {photos.length > 1 && (
-            <button onClick={(e) => prevPhoto(e, photos.length)} className="absolute left-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white">
-              <ChevronLeft className="h-6 w-6" />
-            </button>
-          )}
-          <div className="relative max-w-5xl max-h-[85vh] w-full h-full mx-16" onClick={(e) => e.stopPropagation()}>
-            <Image src={photos[lightboxIndex]} alt={`${listing.title} ${lightboxIndex + 1}`} fill className="object-contain" sizes="100vw" />
-          </div>
-          {photos.length > 1 && (
-            <button onClick={(e) => nextPhoto(e, photos.length)} className="absolute right-4 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white">
-              <ChevronRight className="h-6 w-6" />
-            </button>
-          )}
-          {photos.length > 1 && (
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 max-w-[90vw] overflow-x-auto px-4">
-              {photos.map((photo, i) => (
-                <button key={i} onClick={(e) => { e.stopPropagation(); setLightboxIndex(i) }} className={cn('relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 border-2 transition-all', i === lightboxIndex ? 'border-white opacity-100' : 'border-transparent opacity-50 hover:opacity-75')}>
-                  <Image src={photo} alt="" fill className="object-cover" sizes="56px" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Main content + sidebar */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
         <div className="lg:col-span-2 space-y-8">
           {/* Host info */}
@@ -315,61 +205,15 @@ export default function ListingDetailClient({ id }: Props) {
             )}
           </div>
 
-          {/* Reviews */}
-          <div className="pt-6 border-t border-border">
-            <h3 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              <Star className="h-5 w-5 fill-foreground text-foreground" />
-              {reviews?.length ? `${(reviews.reduce((a, r) => a + r.ratingOverall, 0) / reviews.length).toFixed(2)} · ${reviews.length} review${reviews.length !== 1 ? 's' : ''}` : 'No reviews yet'}
-            </h3>
-
-            {reviewsLoading ? (
-              <div className="animate-pulse space-y-4"><div className="h-16 bg-muted rounded-xl" /><div className="h-16 bg-muted rounded-xl" /></div>
-            ) : reviews?.length ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-                {reviews.map((review) => (
-                  <div key={review.id} className="space-y-2">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-10 w-10">
-                        <AvatarFallback>{review.reviewerId?.[0]?.toUpperCase() ?? 'G'}</AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <div className="font-medium">{review.reviewerId?.split('@')[0] ?? 'Guest'}</div>
-                        <div className="text-sm text-muted-foreground">{new Date(review.createdAt).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</div>
-                      </div>
-                    </div>
-                    <div className="flex text-yellow-500 text-xs">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star key={i} className={cn('h-3.5 w-3.5', i < review.ratingOverall ? 'fill-yellow-400 text-yellow-400' : 'text-muted')} />
-                      ))}
-                    </div>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{review.comment}</p>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-muted-foreground italic">This place doesn&apos;t have any reviews yet.</p>
-            )}
-
-            {user && completedBooking && !reviewSubmitted && !alreadyReviewed && (
-              <div className="mt-8 pt-6 border-t border-border">
-                <h4 className="text-base font-semibold mb-4">Share your experience</h4>
-                <div className="flex gap-1 mb-4">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <button key={star} type="button" onClick={() => setReviewRating(star)} className={cn('text-2xl transition-transform hover:scale-110', star <= reviewRating ? 'text-yellow-400' : 'text-muted')}>★</button>
-                  ))}
-                </div>
-                <Textarea value={reviewComment} onChange={(e) => setReviewComment(e.target.value)} placeholder="What did you love about this place?" rows={3} className="mb-3" />
-                <Button onClick={handleSubmitReview} disabled={submittingReview || !reviewComment.trim()} size="sm">
-                  {submittingReview ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</> : 'Submit Review'}
-                </Button>
-              </div>
-            )}
-            {user && completedBooking && (reviewSubmitted || alreadyReviewed) && (
-              <div className="mt-6 flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-xl p-3 text-sm font-medium">
-                <CheckCircle className="h-4 w-4" />Your review has been submitted. Thank you!
-              </div>
-            )}
-          </div>
+          <ReviewsSection
+            listingId={id}
+            reviews={reviews}
+            reviewStats={reviewStats}
+            reviewsLoading={reviewsLoading}
+            completedBooking={completedBooking}
+            user={user}
+            hostId={listing.hostId}
+          />
         </div>
 
         {/* Booking widget */}

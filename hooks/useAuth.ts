@@ -79,28 +79,28 @@ const useAuth = () => {
   const { setAuth, clearAuth } = useAuthStore()
 
   const loginMutation = useMutation({
-    mutationFn: async (payload: LoginPayload) => {
+    mutationFn: async ({ payload, redirectTo }: { payload: LoginPayload; redirectTo: string }) => {
       const authRes = await apiClient.post<AuthResponse>('/auth/login', payload)
       const { accessToken, refreshToken } = authRes.data
       const user = await fetchCurrentUser(accessToken)
-      return { user, token: accessToken, refreshToken }
+      return { user, token: accessToken, refreshToken, redirectTo }
     },
-    onSuccess: ({ user, token, refreshToken }) => {
+    onSuccess: ({ user, token, refreshToken, redirectTo }) => {
       setAuth(user, token, refreshToken)
-      router.push('/')
+      router.push(redirectTo)
     },
   })
 
   const registerMutation = useMutation({
-    mutationFn: async (payload: RegisterPayload) => {
+    mutationFn: async ({ payload, redirectTo }: { payload: RegisterPayload; redirectTo: string }) => {
       const authRes = await apiClient.post<AuthResponse>('/auth/register', payload)
       const { accessToken, refreshToken } = authRes.data
       const user = await fetchCurrentUser(accessToken)
-      return { user, token: accessToken, refreshToken }
+      return { user, token: accessToken, refreshToken, redirectTo }
     },
-    onSuccess: ({ user, token, refreshToken }) => {
+    onSuccess: ({ user, token, refreshToken, redirectTo }) => {
       setAuth(user, token, refreshToken)
-      router.push('/')
+      router.push(redirectTo)
     },
   })
 
@@ -119,8 +119,10 @@ const useAuth = () => {
   })
 
   return {
-    login: (email: string, password: string) => loginMutation.mutateAsync({ email, password }),
-    register: (data: RegisterPayload) => registerMutation.mutateAsync(data),
+    login: (email: string, password: string, redirectTo = '/') =>
+      loginMutation.mutateAsync({ payload: { email, password }, redirectTo }),
+    register: (data: RegisterPayload, redirectTo = '/') =>
+      registerMutation.mutateAsync({ payload: data, redirectTo }),
     logout: () => logoutMutation.mutate(),
     isLoginLoading: loginMutation.isPending,
     isRegisterLoading: registerMutation.isPending,

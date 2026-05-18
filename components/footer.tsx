@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Home, Globe, Instagram, Twitter, Facebook } from "lucide-react"
+import { Home, Globe } from "lucide-react"
 
 const footerLinks = {
   support: [
@@ -111,21 +111,10 @@ export function Footer() {
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <button className="flex items-center gap-2 text-sm font-medium text-foreground hover:underline">
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground">
               <Globe className="h-4 w-4" />
               English (US)
-            </button>
-            <div className="flex items-center gap-3">
-              <Link href="#" className="text-foreground hover:text-muted-foreground transition-colors">
-                <Facebook className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-foreground hover:text-muted-foreground transition-colors">
-                <Twitter className="h-5 w-5" />
-              </Link>
-              <Link href="#" className="text-foreground hover:text-muted-foreground transition-colors">
-                <Instagram className="h-5 w-5" />
-              </Link>
-            </div>
+            </span>
           </div>
         </div>
       </div>

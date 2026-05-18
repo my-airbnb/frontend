@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Home, Mail, Lock, User, AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +11,8 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import useAuth from '@/hooks/useAuth'
 
 export default function RegisterPage() {
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/'
   const { register, isRegisterLoading, registerError } = useAuth()
   const [form, setForm] = useState({
     firstName: '',
@@ -41,7 +44,7 @@ export default function RegisterPage() {
         lastName: form.lastName,
         email: form.email,
         password: form.password,
-      })
+      }, redirect)
     } catch {
       // handled by hook
     }

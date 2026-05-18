@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Heart, Star } from 'lucide-react'
 import { Listing } from '@/types'
 import { useReviewStats } from '@/hooks/useReviews'
@@ -21,7 +21,9 @@ const ListingCard = ({ listing }: ListingCardProps) => {
   const { user } = useAuthStore()
   const { toggle, isWishlisted, setactiveUser } = useWishlistStore()
 
-  if (user?.id) setactiveUser(user.id)
+  useEffect(() => {
+    if (user?.id) setactiveUser(user.id)
+  }, [user?.id, setactiveUser])
   const isFavorited = isWishlisted(listing.id)
   const { data: reviewStats } = useReviewStats('LISTING', listing.id)
 

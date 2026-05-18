@@ -70,7 +70,6 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
         checkOut: format(endDate, 'yyyy-MM-dd'),
         nbGuests: guests,
         totalPrice: total,
-        serviceFee,
       })
       router.push(`/checkout/${booking.id}`)
     } catch (err: unknown) {

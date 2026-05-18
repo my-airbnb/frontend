@@ -54,11 +54,13 @@ function DashboardPage() {
     }
   }, [searchParams, queryClient, router])
 
-  if (user?.id) setactiveUser(user.id)
+  useEffect(() => {
+    if (user?.id) setactiveUser(user.id)
+  }, [user?.id, setactiveUser])
   const wishlistItems = getItems()
 
-  const { data: bookings, isLoading: bookingsLoading } = useBookings()
-  const { data: hostListings, isLoading: listingsLoading } = useHostListings()
+  const { data: bookings, isLoading: bookingsLoading, isError: bookingsError } = useBookings()
+  const { data: hostListings, isLoading: listingsLoading, isError: listingsError } = useHostListings()
 
   if (!hasHydrated || !isAuthenticated || !user) {
     return (
@@ -138,6 +140,10 @@ function DashboardPage() {
           {activeTab === 'bookings' && (
             bookingsLoading ? (
               <LoadingSkeleton count={3} />
+            ) : bookingsError ? (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground mb-4">Failed to load bookings.</p>
+              </div>
             ) : !bookings?.length ? (
               <div className="text-center py-20">
                 <Calendar className="h-16 w-16 text-muted mx-auto mb-4" />
@@ -171,6 +177,11 @@ function DashboardPage() {
 
           {activeTab === 'incoming' && isHost && (
             listingsLoading ? <LoadingSkeleton count={3} /> :
+            listingsError ? (
+              <div className="text-center py-20">
+                <p className="text-muted-foreground">Failed to load listings.</p>
+              </div>
+            ) :
             !hostListings?.length ? (
               <div className="text-center py-20">
                 <Inbox className="h-16 w-16 text-muted mx-auto mb-4" />
