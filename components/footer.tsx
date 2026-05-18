@@ -81,7 +81,7 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <h3 className="mb-4 text-sm font-semibold text-foreground">Wanderlust</h3>
+            <h3 className="mb-4 text-sm font-semibold text-foreground">Airbnb</h3>
             <ul className="space-y-3">
               {footerLinks.about.map((link) => (
                 <li key={link.label}>
@@ -104,10 +104,10 @@ export function Footer() {
               <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
                 <Home className="h-4 w-4 text-primary-foreground" />
               </div>
-              <span className="font-semibold text-foreground">Wanderlust</span>
+              <span className="font-semibold text-foreground">Airbnb</span>
             </div>
             <p className="text-sm text-muted-foreground">
-              © 2026 Wanderlust, Inc. · Privacy · Terms · Sitemap
+              © 2026 Airbnb, Inc. · Privacy · Terms · Sitemap
             </p>
           </div>
           <div className="flex items-center gap-4">
