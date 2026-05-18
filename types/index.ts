@@ -13,7 +13,6 @@ export interface User {
 export interface Listing {
   id: string
   hostId: string
-  hostEmail: string
   type: string
   title: string
   description: string

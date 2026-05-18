@@ -109,7 +109,7 @@ export default function AdminPage() {
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">{listing.city}</td>
                       <td className="px-5 py-3 font-medium">${listing.pricePerNight}</td>
-                      <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{listing.hostEmail?.split('@')[0] ?? '—'}</td>
+                      <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{listing.hostId?.split('@')[0] ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -40,7 +40,7 @@ export default function ListingDetailClient({ id }: Props) {
   const { data: reviewStats } = useReviewStats('LISTING', id)
   const { data: myBookings } = useBookings()
   const { mutateAsync: sendMessage, isPending: startingChat } = useSendMessage()
-  const { data: hostUser, isLoading: hostLoading } = useGetUserByEmail(listing?.hostEmail ?? '')
+  const { data: hostUser, isLoading: hostLoading } = useGetUserByEmail(listing?.hostId ?? '')
 
   const completedBooking = myBookings?.find((b) => b.listingId === id && b.status === 'COMPLETED')
 
@@ -48,7 +48,7 @@ export default function ListingDetailClient({ id }: Props) {
     if (!listing) return
     if (!user) { router.push('/login'); return }
     try {
-      const res = await sendMessage({ recipientEmail: listing.hostEmail, listingId: listing.id, content: `Hi! I'm interested in ${listing.title}.` })
+      const res = await sendMessage({ recipientEmail: listing.hostId, listingId: listing.id, content: `Hi! I'm interested in ${listing.title}.` })
       if (res.conversationId) {
         router.push(`/messages/${res.conversationId}`)
       } else {
