@@ -9,7 +9,7 @@ const PROTECTED_PATHS = [
   '/checkout',
 ]
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const isProtected = PROTECTED_PATHS.some((path) => pathname.startsWith(path))
 
