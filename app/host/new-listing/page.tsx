@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils"
 import { useCreateListing } from "@/hooks/useListings"
 import useAuthStore from "@/store/authStore"
 import { useEffect } from "react"
+import { useHasHydrated } from "@/hooks/useHasHydrated"
 
 const steps = [
   { id: 1, name: "Basics", description: "Property type and details" },
@@ -52,6 +53,7 @@ const amenitiesList = [
 export default function NewListingPage() {
   const router = useRouter()
   const { isAuthenticated, user } = useAuthStore()
+  const hasHydrated = useHasHydrated()
   const { mutateAsync: createListing, isPending: isCreating } = useCreateListing()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -76,6 +78,7 @@ export default function NewListingPage() {
   })
 
   useEffect(() => {
+    if (!hasHydrated) return
     if (!isAuthenticated) {
       router.push('/login')
       return
@@ -84,7 +87,7 @@ export default function NewListingPage() {
       toast.error('You need to be a host to create listings. Go to Profile to become a host.')
       router.push('/profile')
     }
-  }, [isAuthenticated, user, router])
+  }, [hasHydrated, isAuthenticated, user, router])
 
   const updateFormData = (field: string, value: string | boolean | string[]) => {
     setFormData((prev) => ({ ...prev, [field]: value }))

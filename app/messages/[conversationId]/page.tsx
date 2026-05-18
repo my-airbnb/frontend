@@ -93,7 +93,7 @@ export default function ConversationPage() {
         </div>
         <div>
           <h1 className="text-base font-semibold">{otherEmail.split('@')[0]}</h1>
-          <p className="text-xs text-muted-foreground">Conversation {conversationId.substring(0, 8)}...</p>
+          <p className="text-xs text-muted-foreground">{otherEmail}</p>
         </div>
       </div>
 

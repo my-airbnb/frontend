@@ -46,11 +46,11 @@ export default function ListingDetailClient({ id }: Props) {
 
   const handleContactHost = async () => {
     if (!listing) return
+    if (!user) { router.push('/login'); return }
     try {
       const res = await sendMessage({ recipientEmail: listing.hostEmail, listingId: listing.id, content: `Hi! I'm interested in ${listing.title}.` })
-      const conversationId = (res as unknown as Record<string, unknown>).conversationId as string | undefined
-      if (conversationId) {
-        router.push(`/messages/${conversationId}`)
+      if (res.conversationId) {
+        router.push(`/messages/${res.conversationId}`)
       } else {
         toast.error('Could not start conversation.')
       }

@@ -35,9 +35,9 @@ const processQueue = (error: unknown, token: string | null = null) => {
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
-      const token = useAuthStore.getState().token
+      const { token, refreshToken } = useAuthStore.getState()
       if (token) {
-        if (isTokenExpired(token)) {
+        if (isTokenExpired(token) && !refreshToken) {
           const { clearAuth } = useAuthStore.getState()
           clearAuth()
           window.location.href = '/login'

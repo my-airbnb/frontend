@@ -17,6 +17,10 @@ export function HeroSection() {
   const [checkIn, setCheckIn] = useState<Date>()
   const [checkOut, setCheckOut] = useState<Date>()
   const [guests, setGuests] = useState(1)
+  const [openMobileCheckIn, setOpenMobileCheckIn] = useState(false)
+  const [openMobileCheckOut, setOpenMobileCheckOut] = useState(false)
+  const [openDesktopCheckIn, setOpenDesktopCheckIn] = useState(false)
+  const [openDesktopCheckOut, setOpenDesktopCheckOut] = useState(false)
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -68,7 +72,7 @@ export function HeroSection() {
             </div>
 
             <div className="grid grid-cols-2 gap-3">
-              <Popover>
+              <Popover open={openMobileCheckIn} onOpenChange={setOpenMobileCheckIn}>
                 <PopoverTrigger asChild>
                   <button className="rounded-xl bg-secondary/50 px-4 py-3 text-left">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -81,11 +85,11 @@ export function HeroSection() {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} />
+                  <Calendar mode="single" selected={checkIn} onSelect={(date) => { setCheckIn(date); setOpenMobileCheckIn(false) }} />
                 </PopoverContent>
               </Popover>
 
-              <Popover>
+              <Popover open={openMobileCheckOut} onOpenChange={setOpenMobileCheckOut}>
                 <PopoverTrigger asChild>
                   <button className="rounded-xl bg-secondary/50 px-4 py-3 text-left">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -98,7 +102,7 @@ export function HeroSection() {
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} />
+                  <Calendar mode="single" selected={checkOut} onSelect={(date) => { setCheckOut(date); setOpenMobileCheckOut(false) }} />
                 </PopoverContent>
               </Popover>
             </div>
@@ -148,7 +152,7 @@ export function HeroSection() {
 
             <div className="h-10 w-px bg-border" />
 
-            <Popover>
+            <Popover open={openDesktopCheckIn} onOpenChange={setOpenDesktopCheckIn}>
               <PopoverTrigger asChild>
                 <button className="rounded-xl px-4 py-3 text-left hover:bg-secondary/50">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -161,13 +165,13 @@ export function HeroSection() {
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={checkIn} onSelect={setCheckIn} />
+                <Calendar mode="single" selected={checkIn} onSelect={(date) => { setCheckIn(date); setOpenDesktopCheckIn(false) }} />
               </PopoverContent>
             </Popover>
 
             <div className="h-10 w-px bg-border" />
 
-            <Popover>
+            <Popover open={openDesktopCheckOut} onOpenChange={setOpenDesktopCheckOut}>
               <PopoverTrigger asChild>
                 <button className="rounded-xl px-4 py-3 text-left hover:bg-secondary/50">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -180,7 +184,7 @@ export function HeroSection() {
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={checkOut} onSelect={setCheckOut} />
+                <Calendar mode="single" selected={checkOut} onSelect={(date) => { setCheckOut(date); setOpenDesktopCheckOut(false) }} />
               </PopoverContent>
             </Popover>
 
