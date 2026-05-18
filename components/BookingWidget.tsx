@@ -95,7 +95,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-card p-6 sticky top-24">
+    <div id="booking-widget" className="bg-white border border-gray-200 rounded-2xl shadow-card p-6 lg:sticky lg:top-24 scroll-mt-24">
       {/* Price header */}
       <div className="flex items-center justify-between mb-6">
         <div>
@@ -128,7 +128,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
                 }}
                 minDate={new Date()}
                 excludeDates={blockedDates}
-                monthsShown={2}
+                monthsShown={1}
                 placeholderText="Add dates"
                 className="w-full text-sm text-gray-700 outline-none bg-transparent cursor-pointer font-medium"
                 dateFormat="MMM d, yyyy"

@@ -118,7 +118,7 @@ export default function HomeContent() {
       {/* Hero section */}
       {!hasActiveSearch && !activeCategory && (
         <section className="relative overflow-hidden">
-          <div className="relative h-[480px] w-full">
+          <div className="relative h-[300px] sm:h-[420px] md:h-[480px] w-full">
             <Image
               src="https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=1600"
               alt="Beautiful vacation home"
@@ -128,12 +128,12 @@ export default function HomeContent() {
             />
             <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-black/20 to-black/50" />
             <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
-              <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-bold text-white mb-3 sm:mb-4 drop-shadow-lg">
                 Find your next
                 <br />
                 <span className="text-primary">adventure</span>
               </h1>
-              <p className="text-lg text-white/90 mb-8 max-w-md drop-shadow">
+              <p className="text-sm sm:text-lg text-white/90 mb-5 sm:mb-8 max-w-md drop-shadow">
                 Discover unique places to stay around the world
               </p>
               <div className="w-full max-w-3xl">

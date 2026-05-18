@@ -44,7 +44,7 @@ const SearchBar = ({
             placeholder="Where are you going?"
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="outline-none text-sm text-gray-700 placeholder-gray-400 w-40"
+            className="outline-none text-sm text-gray-700 placeholder-gray-400 w-24 sm:w-40"
           />
           <button
             type="submit"
