@@ -149,17 +149,17 @@ function DashboardPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-2xl font-bold">
+          <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-xl sm:text-2xl font-bold flex-shrink-0">
             {user.firstName.charAt(0).toUpperCase()}
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">
+          <div className="min-w-0">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">
               Welcome, {user.firstName}!
             </h1>
-            <p className="text-gray-500 text-sm flex items-center gap-1 mt-0.5">
-              <FiUser className="w-3 h-3" />
+            <p className="text-gray-500 text-xs sm:text-sm flex items-center gap-1 mt-0.5 truncate">
+              <FiUser className="w-3 h-3 flex-shrink-0" />
               {user.role} &bull; {user.email}
             </p>
           </div>
@@ -168,7 +168,7 @@ function DashboardPage() {
         {isHost && (
           <Link
             href="/host/new-listing"
-            className="btn-primary flex items-center gap-2 text-sm"
+            className="btn-primary flex items-center gap-2 text-sm self-start sm:self-auto"
           >
             <FiPlus className="w-4 h-4" />
             New Listing

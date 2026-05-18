@@ -46,6 +46,13 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  .safe-bottom {
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+  }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 /* Hide footer on chat pages */

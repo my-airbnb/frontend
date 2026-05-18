@@ -53,6 +53,7 @@ export default function ListingDetailClient({ id }: Props) {
   const { data: hostUser } = useGetUserByEmail(listing?.hostId ?? '')
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
+  const [mobilePhotoIndex, setMobilePhotoIndex] = useState(0)
   const [reviewRating, setReviewRating] = useState(5)
   const [reviewComment, setReviewComment] = useState('')
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
@@ -156,7 +157,7 @@ export default function ListingDetailClient({ id }: Props) {
     listing.photos && listing.photos.length > 0 ? listing.photos : [PLACEHOLDER_IMAGE]
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8">
       {/* Back link */}
       <Link
         href="/"
@@ -167,7 +168,7 @@ export default function ListingDetailClient({ id }: Props) {
       </Link>
 
       {/* Title */}
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
+      <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">{listing.title}</h1>
 
       {/* Meta row */}
       <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-6">
@@ -193,59 +194,98 @@ export default function ListingDetailClient({ id }: Props) {
         )}
       </div>
 
-      {/* Photo gallery */}
-      <div className="relative grid grid-cols-2 gap-2 rounded-2xl overflow-hidden mb-8 max-h-[500px]">
-        {/* Main photo */}
-        <div
-          className="relative row-span-2 col-span-1 cursor-pointer group"
-          onClick={() => openLightbox(0)}
-        >
+      {/* Photo gallery — mobile: swipeable single photo, desktop: grid */}
+      <div className="mb-8">
+        {/* Mobile gallery */}
+        <div className="md:hidden relative rounded-2xl overflow-hidden aspect-[4/3]">
           <Image
-            src={photos[0]}
+            src={photos[mobilePhotoIndex]}
             alt={listing.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 768px) 100vw, 50vw"
+            className="object-cover"
+            sizes="100vw"
             priority
           />
+          {photos.length > 1 && (
+            <>
+              <button
+                onClick={() => setMobilePhotoIndex(i => (i - 1 + photos.length) % photos.length)}
+                className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full shadow-md"
+                aria-label="Previous photo"
+              >
+                <FiChevronLeft className="w-5 h-5 text-gray-800" />
+              </button>
+              <button
+                onClick={() => setMobilePhotoIndex(i => (i + 1) % photos.length)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-white/90 rounded-full shadow-md"
+                aria-label="Next photo"
+              >
+                <FiChevronRight className="w-5 h-5 text-gray-800" />
+              </button>
+              <div className="absolute bottom-3 right-3 bg-black/50 text-white text-xs font-medium px-2.5 py-1 rounded-full">
+                {mobilePhotoIndex + 1} / {photos.length}
+              </div>
+            </>
+          )}
+          <button
+            onClick={() => openLightbox(mobilePhotoIndex)}
+            className="absolute bottom-3 left-3 bg-white text-gray-900 text-xs font-semibold px-3 py-1.5 rounded-xl shadow flex items-center gap-1.5 border border-gray-200"
+          >
+            <FiGrid className="w-3.5 h-3.5" />
+            All photos
+          </button>
         </div>
-        {/* Secondary photos */}
-        {photos.slice(1, 5).map((photo, i) => (
+
+        {/* Desktop gallery grid */}
+        <div className="hidden md:grid relative grid-cols-2 gap-2 rounded-2xl overflow-hidden max-h-[500px]">
           <div
-            key={i}
-            className="relative aspect-[4/3] cursor-pointer group"
-            onClick={() => openLightbox(i + 1)}
+            className="relative row-span-2 col-span-1 cursor-pointer group"
+            onClick={() => openLightbox(0)}
           >
             <Image
-              src={photo}
-              alt={`${listing.title} photo ${i + 2}`}
+              src={photos[0]}
+              alt={listing.title}
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
-              sizes="25vw"
+              sizes="50vw"
+              priority
             />
           </div>
-        ))}
-        {/* Fill with placeholder if fewer photos */}
-        {photos.length === 1 && (
-          <>
-            <div className="relative aspect-[4/3] bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-300 text-sm">No photo</span>
+          {photos.slice(1, 5).map((photo, i) => (
+            <div
+              key={i}
+              className="relative aspect-[4/3] cursor-pointer group"
+              onClick={() => openLightbox(i + 1)}
+            >
+              <Image
+                src={photo}
+                alt={`${listing.title} photo ${i + 2}`}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                sizes="25vw"
+              />
             </div>
-            <div className="relative aspect-[4/3] bg-gray-100 flex items-center justify-center">
-              <span className="text-gray-300 text-sm">No photo</span>
-            </div>
-          </>
-        )}
-        {/* Show all photos button */}
-        {photos.length > 1 && (
-          <button
-            onClick={() => openLightbox(0)}
-            className="absolute bottom-4 right-4 bg-white text-gray-900 text-sm font-medium px-4 py-2 rounded-xl shadow-md hover:bg-gray-50 transition-colors flex items-center gap-2 border border-gray-200"
-          >
-            <FiGrid className="w-4 h-4" />
-            Show all {photos.length} photos
-          </button>
-        )}
+          ))}
+          {photos.length === 1 && (
+            <>
+              <div className="relative aspect-[4/3] bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-300 text-sm">No photo</span>
+              </div>
+              <div className="relative aspect-[4/3] bg-gray-100 flex items-center justify-center">
+                <span className="text-gray-300 text-sm">No photo</span>
+              </div>
+            </>
+          )}
+          {photos.length > 1 && (
+            <button
+              onClick={() => openLightbox(0)}
+              className="absolute bottom-4 right-4 bg-white text-gray-900 text-sm font-medium px-4 py-2 rounded-xl shadow-md hover:bg-gray-50 transition-colors flex items-center gap-2 border border-gray-200"
+            >
+              <FiGrid className="w-4 h-4" />
+              Show all {photos.length} photos
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Lightbox modal */}
@@ -530,6 +570,28 @@ export default function ListingDetailClient({ id }: Props) {
         <div className="lg:col-span-1">
           <BookingWidget listing={listing} />
         </div>
+      </div>
+
+      {/* Mobile sticky booking bar */}
+      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-white border-t border-gray-200 px-4 py-3 flex items-center justify-between safe-bottom">
+        <div>
+          <span className="text-xl font-bold text-gray-900">${listing.pricePerNight}</span>
+          <span className="text-gray-500 text-sm"> / night</span>
+          {reviewStats && reviewStats.count > 0 && (
+            <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+              <FiStar className="w-3 h-3 fill-gray-700 text-gray-700" />
+              <span>
+                {reviewStats.averageRating.toFixed(1)} · {reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''}
+              </span>
+            </div>
+          )}
+        </div>
+        <a
+          href="#booking-widget"
+          className="bg-primary hover:bg-primary-hover text-white font-semibold py-3 px-8 rounded-xl transition-colors"
+        >
+          Reserve
+        </a>
       </div>
     </div>
   )
