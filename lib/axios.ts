@@ -7,11 +7,25 @@ const apiClient = axios.create({
   },
 })
 
+const isTokenExpired = (token: string): boolean => {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp ? payload.exp * 1000 < Date.now() : false
+  } catch {
+    return false
+  }
+}
+
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token')
       if (token) {
+        if (isTokenExpired(token)) {
+          localStorage.clear()
+          window.location.href = '/login'
+          return Promise.reject(new Error('Session expired'))
+        }
         config.headers.Authorization = `Bearer ${token}`
       }
     }
