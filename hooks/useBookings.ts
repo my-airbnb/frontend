@@ -8,7 +8,7 @@ export const useBookings = () => {
   return useQuery({
     queryKey: ['bookings', user?.email],
     queryFn: async () => {
-      const response = await apiClient.get<Booking[]>(`/bookings?guestId=${encodeURIComponent(user?.email || '')}`)
+      const response = await apiClient.get<Booking[]>('/bookings')
       return Array.isArray(response.data) ? response.data : []
     },
     enabled: !!user?.email,
@@ -72,7 +72,7 @@ export const useListingBookings = (listingId: string) => {
   return useQuery({
     queryKey: ['listing-bookings', listingId],
     queryFn: async () => {
-      const response = await apiClient.get<Booking[]>(`/bookings?listingId=${listingId}`)
+      const response = await apiClient.get<Booking[]>(`/bookings/listing/${listingId}`)
       return Array.isArray(response.data) ? response.data : []
     },
     enabled: !!listingId,
@@ -94,11 +94,10 @@ export const useBookedListingIds = (checkIn?: string, checkOut?: string) => {
   return useQuery({
     queryKey: ['booked-listing-ids', checkIn, checkOut],
     queryFn: async () => {
-      const response = await apiClient.get<Booking[]>(
-        `/bookings?checkIn=${checkIn}&checkOut=${checkOut}&status=CONFIRMED`
+      const response = await apiClient.get<string[]>(
+        `/bookings/booked-listing-ids?checkIn=${checkIn}&checkOut=${checkOut}`
       )
-      const arr = Array.isArray(response.data) ? response.data : []
-      return arr.map((b) => b.listingId).filter(Boolean)
+      return Array.isArray(response.data) ? response.data.filter(Boolean) : []
     },
     enabled: !!checkIn && !!checkOut,
     staleTime: 60_000,
@@ -120,7 +119,7 @@ export const useAllListingBookings = (listingIds: string[]) => {
     queries: listingIds.map((id) => ({
       queryKey: ['listing-bookings', id],
       queryFn: async () => {
-        const response = await apiClient.get<Booking[]>(`/bookings?listingId=${id}`)
+        const response = await apiClient.get<Booking[]>(`/bookings/listing/${id}`)
         return Array.isArray(response.data) ? response.data : []
       },
       enabled: !!id,
@@ -133,18 +132,15 @@ export const useAllListingBookings = (listingIds: string[]) => {
 }
 
 export const useBlockedDates = (listingId: string) => {
-  const { isAuthenticated } = useAuthStore()
   return useQuery({
     queryKey: ['blocked-dates', listingId],
     queryFn: async () => {
-      const response = await apiClient.get<Booking[]>(
-        `/bookings?listingId=${listingId}&status=CONFIRMED`
+      const response = await apiClient.get<BlockedDateRange[]>(
+        `/bookings/blocked-dates?listingId=${listingId}`
       )
-      const arr = Array.isArray(response.data) ? response.data : []
-      return arr.map((b): BlockedDateRange => ({ checkIn: b.checkIn, checkOut: b.checkOut }))
+      return Array.isArray(response.data) ? response.data : []
     },
-    enabled: !!listingId && isAuthenticated,
+    enabled: !!listingId,
     staleTime: 60_000,
-    retry: false,
   })
 }
