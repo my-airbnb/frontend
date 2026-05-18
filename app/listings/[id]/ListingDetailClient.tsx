@@ -272,7 +272,9 @@ export default function ListingDetailClient({ id }: Props) {
           {/* Description */}
           <div className="pb-6 border-b border-border">
             <h3 className="text-xl font-semibold mb-4">About this place</h3>
-            <p className="text-muted-foreground leading-relaxed whitespace-pre-line" dangerouslySetInnerHTML={{ __html: listing.description }} />
+            <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
+              {listing.description.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')}
+            </p>
           </div>
 
           {/* Amenities */}
