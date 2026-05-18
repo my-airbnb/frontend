@@ -10,17 +10,26 @@ import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
+import type { DateRange } from "react-day-picker"
 
 export function HeroSection() {
   const router = useRouter()
   const [city, setCity] = useState("")
-  const [checkIn, setCheckIn] = useState<Date>()
-  const [checkOut, setCheckOut] = useState<Date>()
+  const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [guests, setGuests] = useState(1)
-  const [openMobileCheckIn, setOpenMobileCheckIn] = useState(false)
-  const [openMobileCheckOut, setOpenMobileCheckOut] = useState(false)
-  const [openDesktopCheckIn, setOpenDesktopCheckIn] = useState(false)
-  const [openDesktopCheckOut, setOpenDesktopCheckOut] = useState(false)
+  const [openDates, setOpenDates] = useState(false)
+  const [openMobileDates, setOpenMobileDates] = useState(false)
+
+  const checkIn = dateRange?.from
+  const checkOut = dateRange?.to
+
+  const handleDateSelect = (range: DateRange | undefined) => {
+    setDateRange(range)
+    if (range?.from && range?.to) {
+      setOpenDates(false)
+      setOpenMobileDates(false)
+    }
+  }
 
   const handleSearch = () => {
     const params = new URLSearchParams()
@@ -71,8 +80,8 @@ export function HeroSection() {
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <Popover open={openMobileCheckIn} onOpenChange={setOpenMobileCheckIn}>
+            <Popover open={openMobileDates} onOpenChange={setOpenMobileDates}>
+              <div className="grid grid-cols-2 gap-3">
                 <PopoverTrigger asChild>
                   <button className="rounded-xl bg-secondary/50 px-4 py-3 text-left">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -84,12 +93,6 @@ export function HeroSection() {
                     </p>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
-                  <Calendar mode="single" selected={checkIn} onSelect={(date) => { setCheckIn(date); setOpenMobileCheckIn(false) }} />
-                </PopoverContent>
-              </Popover>
-
-              <Popover open={openMobileCheckOut} onOpenChange={setOpenMobileCheckOut}>
                 <PopoverTrigger asChild>
                   <button className="rounded-xl bg-secondary/50 px-4 py-3 text-left">
                     <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -101,11 +104,17 @@ export function HeroSection() {
                     </p>
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar mode="single" selected={checkOut} onSelect={(date) => { setCheckOut(date); setOpenMobileCheckOut(false) }} />
-                </PopoverContent>
-              </Popover>
-            </div>
+              </div>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={handleDateSelect}
+                  disabled={(date) => date < new Date()}
+                  numberOfMonths={1}
+                />
+              </PopoverContent>
+            </Popover>
 
             <Popover>
               <PopoverTrigger asChild>
@@ -152,7 +161,7 @@ export function HeroSection() {
 
             <div className="h-10 w-px bg-border" />
 
-            <Popover open={openDesktopCheckIn} onOpenChange={setOpenDesktopCheckIn}>
+            <Popover open={openDates} onOpenChange={setOpenDates}>
               <PopoverTrigger asChild>
                 <button className="rounded-xl px-4 py-3 text-left hover:bg-secondary/50">
                   <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
@@ -165,28 +174,30 @@ export function HeroSection() {
                 </button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={checkIn} onSelect={(date) => { setCheckIn(date); setOpenDesktopCheckIn(false) }} />
+                <Calendar
+                  mode="range"
+                  selected={dateRange}
+                  onSelect={handleDateSelect}
+                  disabled={(date) => date < new Date()}
+                  numberOfMonths={2}
+                />
               </PopoverContent>
             </Popover>
 
             <div className="h-10 w-px bg-border" />
 
-            <Popover open={openDesktopCheckOut} onOpenChange={setOpenDesktopCheckOut}>
-              <PopoverTrigger asChild>
-                <button className="rounded-xl px-4 py-3 text-left hover:bg-secondary/50">
-                  <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
-                    <CalendarDays className="h-3.5 w-3.5" />
-                    Check out
-                  </div>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {checkOut ? format(checkOut, "MMM dd") : "Add dates"}
-                  </p>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar mode="single" selected={checkOut} onSelect={(date) => { setCheckOut(date); setOpenDesktopCheckOut(false) }} />
-              </PopoverContent>
-            </Popover>
+            <button
+              className="rounded-xl px-4 py-3 text-left hover:bg-secondary/50"
+              onClick={() => setOpenDates(true)}
+            >
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <CalendarDays className="h-3.5 w-3.5" />
+                Check out
+              </div>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {checkOut ? format(checkOut, "MMM dd") : "Add dates"}
+              </p>
+            </button>
 
             <div className="h-10 w-px bg-border" />
 
