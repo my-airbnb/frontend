@@ -1,14 +1,17 @@
 import { useQuery, useQueries, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/axios'
 import { Booking, CreateBookingPayload } from '@/types'
+import useAuthStore from '@/store/authStore'
 
 export const useBookings = () => {
+  const { user } = useAuthStore()
   return useQuery({
-    queryKey: ['bookings'],
+    queryKey: ['bookings', user?.email],
     queryFn: async () => {
-      const response = await apiClient.get<Booking[]>('/bookings')
+      const response = await apiClient.get<Booking[]>(`/bookings?guestId=${encodeURIComponent(user?.email || '')}`)
       return Array.isArray(response.data) ? response.data : []
     },
+    enabled: !!user?.email,
   })
 }
 
@@ -21,6 +24,7 @@ export const useCreateBooking = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
+      queryClient.invalidateQueries({ queryKey: ['blocked-dates'] })
     },
   })
 }
@@ -29,7 +33,7 @@ export const useCancelBooking = () => {
   const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (bookingId: string): Promise<void> => {
-      await apiClient.put(`/bookings/${bookingId}/cancel`, {})
+      await apiClient.put(`/bookings/${bookingId}/cancel`)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['bookings'] })
@@ -67,7 +71,7 @@ export const useListingBookings = (listingId: string) => {
   return useQuery({
     queryKey: ['listing-bookings', listingId],
     queryFn: async () => {
-      const response = await apiClient.get<Booking[]>(`/bookings/listing/${listingId}`)
+      const response = await apiClient.get<Booking[]>(`/bookings?listingId=${listingId}`)
       return Array.isArray(response.data) ? response.data : []
     },
     enabled: !!listingId,
@@ -89,10 +93,11 @@ export const useBookedListingIds = (checkIn?: string, checkOut?: string) => {
   return useQuery({
     queryKey: ['booked-listing-ids', checkIn, checkOut],
     queryFn: async () => {
-      const response = await apiClient.get<string[]>(
-        `/bookings/booked-listing-ids?checkIn=${checkIn}&checkOut=${checkOut}`
+      const response = await apiClient.get<Booking[]>(
+        `/bookings?checkIn=${checkIn}&checkOut=${checkOut}&status=CONFIRMED`
       )
-      return response.data || []
+      const arr = Array.isArray(response.data) ? response.data : []
+      return arr.map((b) => b.listingId).filter(Boolean)
     },
     enabled: !!checkIn && !!checkOut,
     staleTime: 60_000,
@@ -114,7 +119,7 @@ export const useAllListingBookings = (listingIds: string[]) => {
     queries: listingIds.map((id) => ({
       queryKey: ['listing-bookings', id],
       queryFn: async () => {
-        const response = await apiClient.get<Booking[]>(`/bookings/listing/${id}`)
+        const response = await apiClient.get<Booking[]>(`/bookings?listingId=${id}`)
         return Array.isArray(response.data) ? response.data : []
       },
       enabled: !!id,
@@ -130,10 +135,11 @@ export const useBlockedDates = (listingId: string) => {
   return useQuery({
     queryKey: ['blocked-dates', listingId],
     queryFn: async () => {
-      const response = await apiClient.get<Array<{ checkIn: string; checkOut: string }>>(
-        `/bookings/blocked-dates?listingId=${listingId}`
+      const response = await apiClient.get<Booking[]>(
+        `/bookings?listingId=${listingId}&status=CONFIRMED`
       )
-      return response.data || []
+      const arr = Array.isArray(response.data) ? response.data : []
+      return arr.map((b) => ({ checkIn: b.checkIn, checkOut: b.checkOut }))
     },
     enabled: !!listingId,
     staleTime: 60_000,

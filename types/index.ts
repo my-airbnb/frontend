@@ -175,7 +175,7 @@ export interface Message {
   conversationId: string
   senderEmail: string
   content: string
-  isRead: boolean
+  read: boolean
   createdAt: string
 }
 
@@ -187,8 +187,14 @@ export interface CreateMessagePayload {
 }
 
 export interface ReviewStats {
-  averageRating: number
-  count: number
+  listingId?: string
+  totalReviews: number
+  averageRating: number | null
+  averageCleanliness?: number | null
+  averageCommunication?: number | null
+  averageLocation?: number | null
+  /** @deprecated use totalReviews */
+  count?: number
 }
 
 export interface BlockedDateRange {

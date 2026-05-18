@@ -118,7 +118,7 @@ export default function ListingDetailClient({ id }: Props) {
         <div className="flex items-center gap-1">
           <Star className="h-4 w-4 fill-foreground text-foreground" />
           <span className="font-medium text-foreground">
-            {reviewStats?.count ? `${reviewStats.averageRating.toFixed(2)} · ${reviewStats.count} review${reviewStats.count !== 1 ? 's' : ''}` : 'New'}
+            {reviewStats?.totalReviews && reviewStats.averageRating != null ? `${reviewStats.averageRating.toFixed(2)} · ${reviewStats.totalReviews} review${reviewStats.totalReviews !== 1 ? 's' : ''}` : 'New'}
           </span>
         </div>
         <div className="flex items-center gap-1">
@@ -376,10 +376,10 @@ export default function ListingDetailClient({ id }: Props) {
         <div>
           <span className="text-xl font-bold">${listing.pricePerNight}</span>
           <span className="text-muted-foreground text-sm"> / night</span>
-          {reviewStats?.count > 0 && (
+          {reviewStats && reviewStats.totalReviews > 0 && reviewStats.averageRating != null && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
               <Star className="h-3 w-3 fill-foreground text-foreground" />
-              <span>{reviewStats.averageRating.toFixed(1)} · {reviewStats.count} review{reviewStats.count !== 1 ? 's' : ''}</span>
+              <span>{reviewStats.averageRating.toFixed(1)} · {reviewStats.totalReviews} review{reviewStats.totalReviews !== 1 ? 's' : ''}</span>
             </div>
           )}
         </div>
