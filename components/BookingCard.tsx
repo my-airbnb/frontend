@@ -1,25 +1,29 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { format, parseISO } from 'date-fns'
-import { FiCalendar, FiUsers, FiDollarSign, FiStar, FiCheckCircle, FiCreditCard } from 'react-icons/fi'
+import { Calendar, Users, DollarSign, Star, CheckCircle, CreditCard, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 import { Booking } from '@/types'
 import { useCancelBooking } from '@/hooks/useBookings'
 import { useListingReviews } from '@/hooks/useReviews'
 import ReviewModal from './ReviewModal'
-import { useRouter } from 'next/navigation'
 import useAuthStore from '@/store/authStore'
+import { toast } from 'sonner'
 
 interface BookingCardProps {
   booking: Booking
 }
 
-const statusColors: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  CONFIRMED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-red-100 text-red-800',
-  COMPLETED: 'bg-blue-100 text-blue-800',
-  REJECTED: 'bg-red-100 text-red-800',
+const statusVariant: Record<string, 'default' | 'secondary' | 'destructive' | 'outline'> = {
+  PENDING: 'secondary',
+  CONFIRMED: 'default',
+  CANCELLED: 'destructive',
+  COMPLETED: 'outline',
+  REJECTED: 'destructive',
 }
 
 const BookingCard = ({ booking }: BookingCardProps) => {
@@ -33,99 +37,95 @@ const BookingCard = ({ booking }: BookingCardProps) => {
     (r) => r.bookingId === booking.id && r.reviewerId === user?.id
   ) ?? false)
 
-  const statusClass = statusColors[booking.status] || 'bg-gray-100 text-gray-800'
-
   const formatDate = (dateStr: string) => {
-    try {
-      return format(parseISO(dateStr), 'MMM dd, yyyy')
-    } catch {
-      return dateStr
-    }
+    try { return format(parseISO(dateStr), 'MMM dd, yyyy') }
+    catch { return dateStr }
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <p className="text-xs text-gray-500 mb-1">Booking ID</p>
-          <p className="text-sm font-mono font-medium text-gray-700">
-            {booking.id.substring(0, 8)}...
-          </p>
-        </div>
-        <span className={`text-xs font-semibold px-3 py-1 rounded-full ${statusClass}`}>
-          {booking.status}
-        </span>
-      </div>
-
-      <div className="space-y-3">
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <FiCalendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span>
-            {formatDate(booking.checkIn)} &rarr; {formatDate(booking.checkOut)}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <FiUsers className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span>
-            {booking.nbGuests} {booking.nbGuests === 1 ? 'guest' : 'guests'}
-          </span>
-        </div>
-
-        <div className="flex items-center gap-3 text-sm text-gray-600">
-          <FiDollarSign className="w-4 h-4 text-gray-400 flex-shrink-0" />
-          <span>
-            Total: <span className="font-semibold text-gray-900">${booking.totalPrice.toLocaleString()}</span>
-            <span className="text-gray-400 ml-1">(incl. ${booking.serviceFee} fee)</span>
-          </span>
-        </div>
-      </div>
-
-      {booking.status === 'PENDING' && (
-        <button
-          onClick={() => router.push(`/checkout/${booking.id}`)}
-          className="mt-4 w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-hover text-white text-sm font-semibold py-2.5 rounded-xl transition-colors"
-        >
-          <FiCreditCard className="w-4 h-4" />
-          Pay Now
-        </button>
-      )}
-
-      {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
-        <button
-          onClick={() => cancel(booking.id)}
-          disabled={isPending}
-          className="mt-2 w-full border border-gray-300 text-gray-700 text-sm font-medium py-2 rounded-xl hover:border-gray-500 hover:bg-gray-50 transition-colors disabled:opacity-50"
-        >
-          {isPending ? 'Cancelling...' : 'Cancel Booking'}
-        </button>
-      )}
-
-      {(booking.status === 'COMPLETED' || booking.status === 'CONFIRMED') && !!booking.listingId && (
-        alreadyReviewed ? (
-          <div className="mt-4 w-full flex items-center justify-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium py-2 rounded-xl">
-            <FiCheckCircle className="w-4 h-4" />
-            Review submitted
+    <Card className="hover:shadow-md transition-shadow">
+      <CardContent className="p-5">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <p className="text-xs text-muted-foreground">Booking ID</p>
+            <p className="text-sm font-mono font-medium">{booking.id.substring(0, 8)}...</p>
           </div>
-        ) : (
-          <button
-            onClick={() => setIsReviewModalOpen(true)}
-            className="mt-4 w-full flex items-center justify-center gap-2 border border-primary text-primary hover:bg-primary hover:text-white text-sm font-medium py-2 rounded-xl transition-colors"
-          >
-            <FiStar className="w-4 h-4" />
-            Leave a Review
-          </button>
-        )
-      )}
+          <Badge variant={statusVariant[booking.status] || 'secondary'}>
+            {booking.status}
+          </Badge>
+        </div>
 
-      <ReviewModal
-        isOpen={isReviewModalOpen}
-        onClose={() => setIsReviewModalOpen(false)}
-        onSuccess={() => { setReviewSubmitted(true); setIsReviewModalOpen(false) }}
-        bookingId={booking.id}
-        listingId={booking.listingId}
-      />
-    </div>
+        <div className="space-y-2.5">
+          <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
+            <Calendar className="h-4 w-4 flex-shrink-0" />
+            <span>{formatDate(booking.checkIn)} → {formatDate(booking.checkOut)}</span>
+          </div>
+          <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
+            <Users className="h-4 w-4 flex-shrink-0" />
+            <span>{booking.nbGuests} guest{booking.nbGuests !== 1 ? 's' : ''}</span>
+          </div>
+          <div className="flex items-center gap-2.5 text-sm text-muted-foreground">
+            <DollarSign className="h-4 w-4 flex-shrink-0" />
+            <span>
+              Total: <span className="font-semibold text-foreground">${booking.totalPrice.toLocaleString()}</span>
+              <span className="text-muted-foreground ml-1">(incl. ${booking.serviceFee} fee)</span>
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-4 space-y-2">
+          {booking.status === 'PENDING' && (
+            <Button
+              className="w-full"
+              onClick={() => router.push(`/checkout/${booking.id}`)}
+            >
+              <CreditCard className="mr-2 h-4 w-4" />
+              Pay Now
+            </Button>
+          )}
+
+          {(booking.status === 'PENDING' || booking.status === 'CONFIRMED') && (
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => cancel(booking.id, {
+                onSuccess: () => toast.success('Booking cancelled.'),
+                onError: () => toast.error('Failed to cancel booking.'),
+              })}
+              disabled={isPending}
+            >
+              {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Cancelling...</> : 'Cancel Booking'}
+            </Button>
+          )}
+
+          {(booking.status === 'COMPLETED' || booking.status === 'CONFIRMED') && !!booking.listingId && (
+            alreadyReviewed ? (
+              <div className="w-full flex items-center justify-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium py-2 rounded-lg">
+                <CheckCircle className="h-4 w-4" />
+                Review submitted
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setIsReviewModalOpen(true)}
+              >
+                <Star className="mr-2 h-4 w-4" />
+                Leave a Review
+              </Button>
+            )
+          )}
+        </div>
+
+        <ReviewModal
+          isOpen={isReviewModalOpen}
+          onClose={() => setIsReviewModalOpen(false)}
+          onSuccess={() => { setReviewSubmitted(true); setIsReviewModalOpen(false) }}
+          bookingId={booking.id}
+          listingId={booking.listingId}
+        />
+      </CardContent>
+    </Card>
   )
 }
 

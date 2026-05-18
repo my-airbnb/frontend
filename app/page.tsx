@@ -1,10 +1,22 @@
-import { Suspense } from 'react'
-import HomeContent from './HomeContent'
+import { Suspense } from "react"
+import { Header } from "@/components/header"
+import { HeroSection } from "@/components/hero-section"
+import { CategoryFilters } from "@/components/category-filters"
+import { PropertyGrid } from "@/components/property-grid"
+import { Footer } from "@/components/footer"
 
 export default function Home() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" /></div>}>
-      <HomeContent />
-    </Suspense>
+    <div className="min-h-screen flex flex-col">
+      <Header />
+      <main className="flex-1">
+        <HeroSection />
+        <CategoryFilters />
+        <Suspense fallback={<div className="py-16 text-center text-muted-foreground">Loading listings...</div>}>
+          <PropertyGrid />
+        </Suspense>
+      </main>
+      <Footer />
+    </div>
   )
 }

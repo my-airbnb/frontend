@@ -1,350 +1,370 @@
-'use client'
+"use client"
 
-import { useState, useEffect, useRef } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { FiArrowLeft, FiAlertCircle, FiCheckCircle, FiUploadCloud, FiX } from 'react-icons/fi'
-import useAuthStore from '@/store/authStore'
-import { useHasHydrated } from '@/hooks/useHasHydrated'
-import { useListing, useUpdateListing } from '@/hooks/useListings'
-import toast from 'react-hot-toast'
+import { useState, useRef, useEffect } from "react"
+import { useRouter, useParams } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
+import { ArrowLeft, Upload, X, Loader2, Save } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Textarea } from "@/components/ui/textarea"
+import { Switch } from "@/components/ui/switch"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Header } from "@/components/header"
+import { toast } from "sonner"
+import { cn } from "@/lib/utils"
+import { useListing, useUpdateListing } from "@/hooks/useListings"
+import useAuthStore from "@/store/authStore"
 
-const LISTING_TYPES = [
-  { value: 'APARTMENT', label: 'Apartment' },
-  { value: 'HOUSE', label: 'House' },
-  { value: 'VILLA', label: 'Villa' },
-  { value: 'CABIN', label: 'Cabin' },
-  { value: 'STUDIO', label: 'Studio' },
-  { value: 'CONDO', label: 'Condo' },
-  { value: 'TOWNHOUSE', label: 'Townhouse' },
-  { value: 'COTTAGE', label: 'Cottage' },
-  { value: 'LOFT', label: 'Loft' },
+const propertyTypes = [
+  "Apartment", "House", "Villa", "Cabin", "Cottage", "Treehouse", "Boat", "Castle", "Other",
 ]
 
-const AMENITIES_OPTIONS = [
-  { value: 'wifi', label: 'WiFi', icon: '📶' },
-  { value: 'kitchen', label: 'Kitchen', icon: '🍳' },
-  { value: 'parking', label: 'Free Parking', icon: '🚗' },
-  { value: 'pool', label: 'Pool', icon: '🏊' },
-  { value: 'gym', label: 'Gym', icon: '💪' },
-  { value: 'tv', label: 'TV', icon: '📺' },
-  { value: 'ac', label: 'Air Conditioning', icon: '❄️' },
-  { value: 'washer', label: 'Washer', icon: '🫧' },
-  { value: 'dryer', label: 'Dryer', icon: '👕' },
-  { value: 'workspace', label: 'Workspace', icon: '💻' },
-  { value: 'hot_tub', label: 'Hot Tub', icon: '♨️' },
-  { value: 'bbq', label: 'BBQ Grill', icon: '🍖' },
+const amenitiesList = [
+  { id: "WiFi", label: "📶 WiFi" },
+  { id: "Kitchen", label: "🍳 Kitchen" },
+  { id: "Washer", label: "🫧 Washer" },
+  { id: "Dryer", label: "🌀 Dryer" },
+  { id: "Air conditioning", label: "❄️ Air conditioning" },
+  { id: "Heating", label: "🔥 Heating" },
+  { id: "TV", label: "📺 TV" },
+  { id: "Free parking", label: "🅿️ Free parking" },
+  { id: "Pool", label: "🏊 Pool" },
+  { id: "Hot tub", label: "🛁 Hot tub" },
+  { id: "Gym", label: "💪 Gym" },
+  { id: "Elevator", label: "🛗 Elevator" },
+  { id: "Breakfast", label: "🥐 Breakfast" },
+  { id: "Workspace", label: "💻 Workspace" },
+  { id: "Beachfront", label: "🏖️ Beachfront" },
+  { id: "Mountain view", label: "🏔️ Mountain view" },
 ]
-
-async function uploadToServer(file: File): Promise<string> {
-  const formData = new FormData()
-  formData.append('file', file)
-  const res = await fetch('/api/upload', { method: 'POST', body: formData })
-  if (!res.ok) {
-    let msg = `Upload failed (${res.status})`
-    try {
-      const err = await res.json()
-      if (err?.error) msg = err.error
-    } catch {}
-    throw new Error(msg)
-  }
-  const data = await res.json()
-  return data.url as string
-}
 
 export default function EditListingPage() {
-  const params = useParams()
   const router = useRouter()
-  const { user, isAuthenticated } = useAuthStore()
-  const hasHydrated = useHasHydrated()
+  const params = useParams()
   const id = params.id as string
-
+  const { isAuthenticated } = useAuthStore()
   const { data: listing, isLoading } = useListing(id)
   const { mutateAsync: updateListing, isPending } = useUpdateListing()
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [uploadingPhotos, setUploadingPhotos] = useState(false)
 
-  const [form, setForm] = useState({
-    title: '',
-    description: '',
-    type: 'APARTMENT',
-    address: '',
-    city: '',
-    country: '',
-    pricePerNight: '',
-    maxGuests: '2',
-    bedrooms: '1',
-    beds: '1',
-    bathrooms: '1',
-    amenities: [] as string[],
+  const [formData, setFormData] = useState({
+    propertyType: "",
+    title: "",
+    description: "",
+    price: "",
     instantBook: false,
+    address: "",
+    city: "",
+    country: "",
+    guests: "2",
+    bedrooms: "1",
+    beds: "1",
+    bathrooms: "1",
+    amenities: [] as string[],
     photos: [] as string[],
   })
-  const [uploading, setUploading] = useState(false)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    if (!hasHydrated) return
     if (!isAuthenticated) router.push('/login')
-    else if (user?.role === 'GUEST') router.push('/dashboard')
-  }, [hasHydrated, isAuthenticated, user, router])
+  }, [isAuthenticated, router])
 
-  // Populate form once listing loads
   useEffect(() => {
     if (listing) {
-      setForm({
-        title: listing.title,
-        description: listing.description,
-        type: listing.type,
-        address: listing.address,
-        city: listing.city,
-        country: listing.country,
-        pricePerNight: String(listing.pricePerNight),
-        maxGuests: String(listing.maxGuests),
-        bedrooms: String(listing.bedrooms),
-        beds: String(listing.beds),
-        bathrooms: String(listing.bathrooms),
+      setFormData({
+        propertyType: listing.type?.toLowerCase() || "",
+        title: listing.title || "",
+        description: listing.description || "",
+        price: String(listing.pricePerNight || ""),
+        instantBook: listing.instantBook || false,
+        address: listing.address || "",
+        city: listing.city || "",
+        country: listing.country || "",
+        guests: String(listing.maxGuests || 2),
+        bedrooms: String(listing.bedrooms || 1),
+        beds: String(listing.beds || 1),
+        bathrooms: String(listing.bathrooms || 1),
         amenities: listing.amenities || [],
-        instantBook: listing.instantBook,
         photos: listing.photos || [],
       })
     }
   }, [listing])
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value, type } = e.target
-    if (type === 'checkbox') {
-      const checked = (e.target as HTMLInputElement).checked
-      if (name === 'instantBook') {
-        setForm((prev) => ({ ...prev, instantBook: checked }))
-      } else if (name === 'amenities') {
-        setForm((prev) => ({
-          ...prev,
-          amenities: checked
-            ? [...prev.amenities, value]
-            : prev.amenities.filter((a) => a !== value),
-        }))
-      }
-    } else {
-      setForm((prev) => ({ ...prev, [name]: value }))
-    }
+  const update = (field: string, value: string | boolean | string[]) => {
+    setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handlePhotoFiles = async (files: FileList | null) => {
-    if (!files || files.length === 0) return
-    setUploading(true)
+  const toggleAmenity = (id: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      amenities: prev.amenities.includes(id)
+        ? prev.amenities.filter((a) => a !== id)
+        : [...prev.amenities, id],
+    }))
+  }
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    if (!files.length) return
+    setUploadingPhotos(true)
     try {
-      const uploads = await Promise.all(Array.from(files).map(uploadToServer))
-      setForm((prev) => ({ ...prev, photos: [...prev.photos, ...uploads] }))
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Some photos failed to upload.'
-      toast.error(msg)
+      const uploaded: string[] = []
+      for (const file of files) {
+        const fd = new FormData()
+        fd.append('file', file)
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        if (!res.ok) throw new Error('Upload failed')
+        const { url } = await res.json()
+        uploaded.push(url)
+      }
+      setFormData((prev) => ({ ...prev, photos: [...prev.photos, ...uploaded] }))
+      toast.success(`${uploaded.length} photo${uploaded.length > 1 ? 's' : ''} uploaded`)
+    } catch {
+      toast.error('Failed to upload photos')
     } finally {
-      setUploading(false)
+      setUploadingPhotos(false)
+      if (fileInputRef.current) fileInputRef.current.value = ''
     }
   }
 
-  const removePhoto = (url: string) => {
-    setForm((prev) => ({ ...prev, photos: prev.photos.filter((p) => p !== url) }))
+  const removePhoto = (index: number) => {
+    setFormData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }))
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleSave = async () => {
+    if (!formData.title.trim()) { toast.error('Title is required'); return }
+    if (!formData.price || Number(formData.price) <= 0) { toast.error('Valid price is required'); return }
+    if (!formData.city.trim()) { toast.error('City is required'); return }
+
     try {
       await updateListing({
         id,
         payload: {
-          title: form.title,
-          description: form.description,
-          type: form.type,
-          address: form.address,
-          city: form.city,
-          country: form.country,
-          pricePerNight: Number(form.pricePerNight),
-          maxGuests: Number(form.maxGuests),
-          bedrooms: Number(form.bedrooms),
-          beds: Number(form.beds),
-          bathrooms: Number(form.bathrooms),
-          amenities: form.amenities,
-          instantBook: form.instantBook,
-          photos: form.photos,
+          title: formData.title,
+          description: formData.description,
+          type: formData.propertyType.toUpperCase(),
+          address: formData.address,
+          city: formData.city,
+          country: formData.country,
+          pricePerNight: Number(formData.price),
+          maxGuests: Number(formData.guests),
+          bedrooms: Number(formData.bedrooms),
+          beds: Number(formData.beds),
+          bathrooms: Number(formData.bathrooms),
+          amenities: formData.amenities,
+          instantBook: formData.instantBook,
+          photos: formData.photos,
         },
       })
-      toast.success('Listing updated!')
+      toast.success('Listing updated successfully!')
       router.push('/dashboard')
     } catch {
-      toast.error('Failed to update listing.')
+      toast.error('Failed to update listing')
     }
   }
 
-  if (!hasHydrated || !isAuthenticated || !user || user.role === 'GUEST') return null
-
   if (isLoading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary mx-auto" />
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex items-center justify-center py-32">
+          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    )
+  }
+
+  if (!listing) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex flex-col items-center justify-center py-32 gap-4">
+          <p className="text-muted-foreground">Listing not found</p>
+          <Button variant="outline" onClick={() => router.push('/dashboard')}>Back to Dashboard</Button>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium">
-          <FiArrowLeft className="w-4 h-4" />
-          Dashboard
-        </Link>
-      </div>
+    <div className="min-h-screen bg-background">
+      <Header />
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Edit listing</h1>
-      <p className="text-gray-500 mb-8">Update your property details.</p>
-
-      <form onSubmit={handleSubmit} className="space-y-8">
-        {/* Basic info */}
-        <div className="space-y-5">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Basic information</h2>
-          <div>
-            <label className="label">Property type</label>
-            <select name="type" value={form.type} onChange={handleChange} className="input-field">
-              {LISTING_TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Title</label>
-            <input name="title" type="text" value={form.title} onChange={handleChange} required maxLength={100} className="input-field" />
-          </div>
-          <div>
-            <label className="label">Description</label>
-            <textarea name="description" value={form.description} onChange={handleChange} required rows={5} maxLength={1000} className="input-field resize-none" />
-          </div>
-          <div>
-            <label className="label">Price per night (USD)</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500">$</span>
-              <input name="pricePerNight" type="number" value={form.pricePerNight} onChange={handleChange} required min={1} className="input-field pl-8" />
-            </div>
-          </div>
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="font-medium text-gray-900 text-sm">Instant Book</label>
-              <p className="text-xs text-gray-500 mt-0.5">Allow guests to book without approval</p>
-            </div>
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input type="checkbox" name="instantBook" checked={form.instantBook} onChange={handleChange} className="sr-only peer" />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary" />
-            </label>
-          </div>
-        </div>
-
-        {/* Location */}
-        <div className="space-y-5">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Location</h2>
-          <div>
-            <label className="label">Street address</label>
-            <input name="address" type="text" value={form.address} onChange={handleChange} required className="input-field" />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">City</label>
-              <input name="city" type="text" value={form.city} onChange={handleChange} required className="input-field" />
-            </div>
-            <div>
-              <label className="label">Country</label>
-              <input name="country" type="text" value={form.country} onChange={handleChange} required className="input-field" />
-            </div>
-          </div>
-        </div>
-
-        {/* Details */}
-        <div className="space-y-5">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Property details</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="label">Max guests</label>
-              <input name="maxGuests" type="number" value={form.maxGuests} onChange={handleChange} min={1} max={50} required className="input-field" />
-            </div>
-            <div>
-              <label className="label">Bedrooms</label>
-              <input name="bedrooms" type="number" value={form.bedrooms} onChange={handleChange} min={0} max={20} required className="input-field" />
-            </div>
-            <div>
-              <label className="label">Beds</label>
-              <input name="beds" type="number" value={form.beds} onChange={handleChange} min={1} max={50} required className="input-field" />
-            </div>
-            <div>
-              <label className="label">Bathrooms</label>
-              <input name="bathrooms" type="number" value={form.bathrooms} onChange={handleChange} min={1} max={20} step={0.5} required className="input-field" />
-            </div>
-          </div>
-        </div>
-
-        {/* Amenities */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Amenities</h2>
-          <div className="grid grid-cols-2 gap-3">
-            {AMENITIES_OPTIONS.map((amenity) => {
-              const checked = form.amenities.includes(amenity.value)
-              return (
-                <label key={amenity.value} className={`flex items-center gap-3 border rounded-xl p-4 cursor-pointer transition-all ${checked ? 'border-gray-900 bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}>
-                  <input type="checkbox" name="amenities" value={amenity.value} checked={checked} onChange={handleChange} className="sr-only" />
-                  <span className="text-xl">{amenity.icon}</span>
-                  <span className="text-sm font-medium text-gray-700">{amenity.label}</span>
-                  {checked && <span className="ml-auto text-gray-900 text-sm font-bold">✓</span>}
-                </label>
-              )
-            })}
-          </div>
-        </div>
-
-        {/* Photos */}
-        <div className="space-y-4">
-          <h2 className="text-lg font-semibold text-gray-900 border-b pb-2">Photos</h2>
-          <label
-            htmlFor="photo-upload-edit"
-            className="border-2 border-dashed border-gray-300 rounded-2xl p-8 text-center hover:border-primary transition-colors cursor-pointer block"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => { e.preventDefault(); handlePhotoFiles(e.dataTransfer.files) }}
-          >
-            <input id="photo-upload-edit" ref={fileInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handlePhotoFiles(e.target.files)} />
-            <FiUploadCloud className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-            {uploading ? (
-              <p className="text-sm text-primary font-medium">Uploading...</p>
-            ) : (
-              <p className="text-sm font-medium text-gray-700">Click to upload or drag & drop</p>
-            )}
-          </label>
-
-          {form.photos.length > 0 && (
-            <div className="grid grid-cols-3 gap-3">
-              {form.photos.map((url, i) => (
-                <div key={url} className="relative aspect-square rounded-xl overflow-hidden group">
-                  <Image src={url} alt={`Photo ${i + 1}`} fill className="object-cover" sizes="33vw" />
-                  {i === 0 && (
-                    <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">Cover</span>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => removePhoto(url)}
-                    className="absolute top-2 right-2 p-1 bg-black/60 hover:bg-black/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                  >
-                    <FiX className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="flex gap-3 pt-4 border-t border-gray-200">
-          <Link href="/dashboard" className="btn-outline flex-1 text-center">
-            Cancel
+      <main className="py-8">
+        <div className="container mx-auto max-w-3xl px-4">
+          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
           </Link>
-          <button type="submit" disabled={isPending || uploading} className="btn-primary flex-1 disabled:opacity-60">
-            {isPending ? 'Saving...' : 'Save changes'}
-          </button>
+
+          <div className="flex items-center justify-between mb-8">
+            <div>
+              <h1 className="text-2xl font-semibold text-foreground lg:text-3xl">Edit Listing</h1>
+              <p className="mt-1 text-muted-foreground truncate max-w-xs">{listing.title}</p>
+            </div>
+            <Button onClick={handleSave} disabled={isPending || uploadingPhotos}>
+              {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
+            </Button>
+          </div>
+
+          <div className="space-y-8">
+            {/* Basics */}
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold mb-6">Basic Information</h2>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Property type</Label>
+                  <Select value={formData.propertyType} onValueChange={(v) => update("propertyType", v)}>
+                    <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
+                    <SelectContent>
+                      {propertyTypes.map((t) => (
+                        <SelectItem key={t} value={t.toLowerCase()}>{t}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title</Label>
+                  <Input id="title" value={formData.title} onChange={(e) => update("title", e.target.value)} maxLength={100} />
+                  <p className="text-xs text-muted-foreground">{formData.title.length}/100</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea id="description" value={formData.description} onChange={(e) => update("description", e.target.value)} className="min-h-32" maxLength={1000} />
+                  <p className="text-xs text-muted-foreground">{formData.description.length}/1000</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="price">Price per night (USD)</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
+                    <Input id="price" type="number" value={formData.price} onChange={(e) => update("price", e.target.value)} className="pl-7" min={1} />
+                  </div>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-border p-4">
+                  <div>
+                    <Label className="font-medium">Instant Book</Label>
+                    <p className="text-sm text-muted-foreground">Allow guests to book without approval</p>
+                  </div>
+                  <Switch checked={formData.instantBook} onCheckedChange={(v) => update("instantBook", v)} />
+                </div>
+              </div>
+            </section>
+
+            {/* Location */}
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold mb-6">Location</h2>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="address">Street address</Label>
+                  <Input id="address" value={formData.address} onChange={(e) => update("address", e.target.value)} />
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="city">City</Label>
+                    <Input id="city" value={formData.city} onChange={(e) => update("city", e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country</Label>
+                    <Input id="country" value={formData.country} onChange={(e) => update("country", e.target.value)} />
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Details */}
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold mb-6">Property Details</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {[
+                  { label: "Max guests", field: "guests", max: 16, unit: "guest" },
+                  { label: "Bedrooms", field: "bedrooms", max: 10, unit: "bedroom" },
+                  { label: "Beds", field: "beds", max: 10, unit: "bed" },
+                  { label: "Bathrooms", field: "bathrooms", max: 10, unit: "bathroom" },
+                ].map(({ label, field, max, unit }) => (
+                  <div key={field} className="space-y-2">
+                    <Label>{label}</Label>
+                    <Select value={formData[field as keyof typeof formData] as string} onValueChange={(v) => update(field, v)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {[...Array(max)].map((_, i) => (
+                          <SelectItem key={i + 1} value={String(i + 1)}>{i + 1} {unit}{i > 0 ? "s" : ""}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Amenities */}
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold mb-2">Amenities</h2>
+              <p className="text-sm text-muted-foreground mb-6">Select all amenities your place offers</p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {amenitiesList.map((amenity) => {
+                  const isSelected = formData.amenities.includes(amenity.id)
+                  return (
+                    <button
+                      key={amenity.id}
+                      type="button"
+                      onClick={() => toggleAmenity(amenity.id)}
+                      className={cn(
+                        "flex items-center justify-between rounded-lg border p-3 text-left text-sm transition-colors",
+                        isSelected ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground"
+                      )}
+                    >
+                      <span className={cn("font-medium", isSelected ? "text-primary" : "text-foreground")}>{amenity.label}</span>
+                      {isSelected && <span className="text-primary">✓</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            </section>
+
+            {/* Photos */}
+            <section className="rounded-2xl border border-border bg-card p-6">
+              <h2 className="text-lg font-semibold mb-2">Photos</h2>
+              <p className="text-sm text-muted-foreground mb-6">The first photo will be used as the cover image</p>
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <label className={cn(
+                  "flex aspect-square cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/50 transition-colors hover:border-primary hover:bg-muted",
+                  uploadingPhotos && "opacity-50 pointer-events-none"
+                )}>
+                  {uploadingPhotos ? (
+                    <><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /><span className="mt-2 text-sm text-muted-foreground">Uploading...</span></>
+                  ) : (
+                    <><Upload className="h-8 w-8 text-muted-foreground mb-2" /><span className="text-sm font-medium text-muted-foreground">Add photos</span></>
+                  )}
+                  <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploadingPhotos} />
+                </label>
+                {formData.photos.map((url, i) => (
+                  <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-border">
+                    <Image src={url} alt={`Photo ${i + 1}`} fill className="object-cover" />
+                    {i === 0 && (
+                      <span className="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-0.5 rounded-full">Cover</span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(i)}
+                      className="absolute top-2 right-2 bg-black/60 text-white rounded-full p-1 hover:bg-black/80 transition-colors"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            <div className="flex justify-end pb-8">
+              <Button onClick={handleSave} disabled={isPending || uploadingPhotos} size="lg">
+                {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : <><Save className="mr-2 h-4 w-4" />Save Changes</>}
+              </Button>
+            </div>
+          </div>
         </div>
-      </form>
+      </main>
     </div>
   )
 }

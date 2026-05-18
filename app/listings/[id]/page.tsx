@@ -1,10 +1,21 @@
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
 import ListingDetailClient from './ListingDetailClient'
 
-interface Props {
+export default async function ListingDetailPage({
+  params,
+}: {
   params: Promise<{ id: string }>
-}
-
-export default async function ListingPage({ params }: Props) {
+}) {
   const { id } = await params
-  return <ListingDetailClient id={id} />
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1">
+        <ListingDetailClient id={id} />
+      </main>
+      <Footer />
+    </div>
+  )
 }

@@ -3,10 +3,12 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FiMessageSquare, FiUser } from 'react-icons/fi'
+import { MessageSquare, User, Loader2 } from 'lucide-react'
 import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { useConversations } from '@/hooks/useChat'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
 import { formatDistanceToNow, parseISO } from 'date-fns'
 
 export default function MessagesPage() {
@@ -16,78 +18,69 @@ export default function MessagesPage() {
   const { data: conversations, isLoading } = useConversations()
 
   useEffect(() => {
-    if (hasHydrated && !isAuthenticated) {
-      router.push('/login')
-    }
+    if (hasHydrated && !isAuthenticated) router.push('/login')
   }, [hasHydrated, isAuthenticated, router])
 
   if (!hasHydrated || !isAuthenticated || !user) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-      </div>
-    )
+    return <div className="flex items-center justify-center min-h-screen"><Loader2 className="h-10 w-10 animate-spin text-primary" /></div>
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-      <h1 className="text-3xl font-bold text-gray-900 mb-8">Messages</h1>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+          <h1 className="text-3xl font-bold mb-8">Messages</h1>
 
-      {isLoading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="animate-pulse bg-white border border-gray-200 rounded-2xl p-4 h-24" />
-          ))}
-        </div>
-      ) : !conversations || conversations.length === 0 ? (
-        <div className="text-center py-20 bg-gray-50 rounded-2xl border border-gray-100">
-          <FiMessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">No messages yet</h3>
-          <p className="text-gray-500">
-            When you contact hosts or guests, your messages will appear here.
-          </p>
-        </div>
-      ) : (
-        <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-          <ul className="divide-y divide-gray-200">
-            {conversations.map((conv) => {
-              // Determine the other participant's email based on the current user
-              const otherEmail = conv.hostEmail === user.email ? conv.guestEmail : conv.hostEmail
-              
-              return (
-                <li key={conv.id}>
-                  <Link
-                    href={`/messages/${conv.id}`}
-                    className="flex items-center gap-4 p-5 hover:bg-gray-50 transition-colors relative"
-                  >
-                    <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500 flex-shrink-0">
-                      <FiUser className="w-6 h-6" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex justify-between items-baseline mb-1">
-                        <h3 className="text-lg font-semibold text-gray-900 truncate">
-                          {otherEmail.split('@')[0]}
-                        </h3>
-                        {conv.lastMessageAt && (
-                          <span className="text-xs text-gray-500 whitespace-nowrap ml-2">
-                            {formatDistanceToNow(parseISO(conv.lastMessageAt), { addSuffix: true })}
-                          </span>
+          {isLoading ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="animate-pulse bg-card border border-border rounded-2xl p-4 h-24" />
+              ))}
+            </div>
+          ) : !conversations?.length ? (
+            <div className="text-center py-20 bg-muted/30 rounded-2xl border border-border">
+              <MessageSquare className="h-16 w-16 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No messages yet</h3>
+              <p className="text-muted-foreground">When you contact hosts or guests, your messages will appear here.</p>
+            </div>
+          ) : (
+            <div className="bg-card border border-border rounded-2xl overflow-hidden">
+              <ul className="divide-y divide-border">
+                {conversations.map((conv) => {
+                  const otherEmail = conv.hostEmail === user.email ? conv.guestEmail : conv.hostEmail
+                  return (
+                    <li key={conv.id}>
+                      <Link href={`/messages/${conv.id}`} className="flex items-center gap-4 p-5 hover:bg-muted/50 transition-colors relative">
+                        <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                          <User className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex justify-between items-baseline mb-1">
+                            <h3 className="text-base font-semibold truncate">{otherEmail.split('@')[0]}</h3>
+                            {conv.lastMessageAt && (
+                              <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">
+                                {formatDistanceToNow(parseISO(conv.lastMessageAt), { addSuffix: true })}
+                              </span>
+                            )}
+                          </div>
+                          <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                            {conv.lastMessage || 'Click to view conversation...'}
+                          </p>
+                        </div>
+                        {conv.unreadCount > 0 && (
+                          <div className="w-2.5 h-2.5 bg-primary rounded-full flex-shrink-0" />
                         )}
-                      </div>
-                      <p className={`text-sm truncate ${conv.unreadCount > 0 ? 'font-semibold text-gray-900' : 'text-gray-500'}`}>
-                        {conv.lastMessage || 'Click to view conversation...'}
-                      </p>
-                    </div>
-                    {conv.unreadCount > 0 && (
-                      <div className="absolute right-5 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full"></div>
-                    )}
-                  </Link>
-                </li>
-              )
-            })}
-          </ul>
+                      </Link>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          )}
         </div>
-      )}
+      </main>
+      <Footer />
     </div>
   )
 }

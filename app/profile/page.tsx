@@ -3,11 +3,20 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { FiArrowLeft, FiUser, FiMail, FiPhone, FiCamera } from 'react-icons/fi'
-import toast from 'react-hot-toast'
+import { ArrowLeft, Mail, Phone, Camera, Loader2 } from 'lucide-react'
 import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { useUpdateProfile } from '@/hooks/useAuth'
+import { useBecomeHost } from '@/hooks/useAuth'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
+import { Header } from '@/components/header'
+import { Footer } from '@/components/footer'
+import { toast } from 'sonner'
 
 async function uploadAvatar(file: File): Promise<string> {
   const formData = new FormData()
@@ -23,29 +32,15 @@ export default function ProfilePage() {
   const { user, isAuthenticated } = useAuthStore()
   const hasHydrated = useHasHydrated()
   const { mutateAsync: updateProfile, isPending } = useUpdateProfile()
+  const { mutate: becomeHost, isPending: isBecomeHostPending } = useBecomeHost()
 
-  const [form, setForm] = useState({
-    firstName: '',
-    lastName: '',
-    phone: '',
-    avatarUrl: '',
-  })
+  const [form, setForm] = useState({ firstName: '', lastName: '', phone: '', avatarUrl: '' })
   const [uploadingAvatar, setUploadingAvatar] = useState(false)
 
   useEffect(() => {
     if (!hasHydrated) return
-    if (!isAuthenticated) {
-      router.push('/login')
-      return
-    }
-    if (user) {
-      setForm({
-        firstName: user.firstName,
-        lastName: user.lastName,
-        phone: user.phone || '',
-        avatarUrl: user.avatarUrl || '',
-      })
-    }
+    if (!isAuthenticated) { router.push('/login'); return }
+    if (user) setForm({ firstName: user.firstName, lastName: user.lastName, phone: user.phone || '', avatarUrl: user.avatarUrl || '' })
   }, [hasHydrated, isAuthenticated, user, router])
 
   const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -65,12 +60,7 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      await updateProfile({
-        firstName: form.firstName,
-        lastName: form.lastName,
-        phone: form.phone || undefined,
-        avatarUrl: form.avatarUrl || undefined,
-      })
+      await updateProfile({ firstName: form.firstName, lastName: form.lastName, phone: form.phone || undefined, avatarUrl: form.avatarUrl || undefined })
       toast.success('Profile updated!')
     } catch {
       toast.error('Failed to update profile.')
@@ -80,112 +70,87 @@ export default function ProfilePage() {
   if (!hasHydrated || !isAuthenticated || !user) return null
 
   return (
-    <div className="max-w-lg mx-auto px-4 sm:px-6 py-10">
-      <div className="flex items-center gap-4 mb-8">
-        <Link href="/dashboard" className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 font-medium">
-          <FiArrowLeft className="w-4 h-4" />
-          Dashboard
-        </Link>
-      </div>
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+      <main className="flex-1">
+        <div className="max-w-lg mx-auto px-4 sm:px-6 py-10">
+          <div className="flex items-center gap-2 mb-8">
+            <Button variant="ghost" size="sm" asChild>
+              <Link href="/dashboard"><ArrowLeft className="mr-2 h-4 w-4" />Dashboard</Link>
+            </Button>
+          </div>
 
-      <h1 className="text-3xl font-bold text-gray-900 mb-2">Your profile</h1>
-      <p className="text-gray-500 mb-8">Manage your personal information.</p>
+          <h1 className="text-3xl font-bold mb-2">Your profile</h1>
+          <p className="text-muted-foreground mb-8">Manage your personal information.</p>
 
-      {/* Avatar */}
-      <div className="flex items-center gap-6 mb-8 p-5 bg-gray-50 rounded-2xl border border-gray-200">
-        <div className="relative">
-          {form.avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={form.avatarUrl}
-              alt="Avatar"
-              className="w-20 h-20 rounded-full object-cover border-2 border-white shadow"
-            />
-          ) : (
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-white text-3xl font-bold">
-              {user.firstName.charAt(0).toUpperCase()}
+          {/* Avatar section */}
+          <Card className="mb-8">
+            <CardContent className="p-5 flex items-center gap-6">
+              <div className="relative">
+                <Avatar className="h-20 w-20">
+                  <AvatarImage src={form.avatarUrl} />
+                  <AvatarFallback className="text-2xl font-bold">
+                    {user.firstName?.[0]}{user.lastName?.[0]}
+                  </AvatarFallback>
+                </Avatar>
+                <label className="absolute -bottom-1 -right-1 h-7 w-7 bg-foreground rounded-full flex items-center justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                  {uploadingAvatar ? <Loader2 className="h-3.5 w-3.5 animate-spin text-background" /> : <Camera className="h-3.5 w-3.5 text-background" />}
+                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                </label>
+              </div>
+              <div>
+                <p className="font-semibold">{user.firstName} {user.lastName}</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-1 mt-0.5">
+                  <Mail className="h-3.5 w-3.5" />{user.email}
+                </p>
+                <Badge variant="secondary" className="mt-1">{user.role}</Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>First name</Label>
+                <Input value={form.firstName} onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))} required />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Last name</Label>
+                <Input value={form.lastName} onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))} required />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Email</Label>
+              <Input type="email" value={user.email} disabled className="opacity-60 cursor-not-allowed" />
+              <p className="text-xs text-muted-foreground">Email cannot be changed.</p>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label>Phone number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input type="tel" value={form.phone} onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))} placeholder="+1 (555) 000-0000" className="pl-10" />
+              </div>
+            </div>
+
+            <Button type="submit" className="w-full" disabled={isPending || uploadingAvatar}>
+              {isPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Saving...</> : 'Save changes'}
+            </Button>
+          </form>
+
+          {user.role === 'GUEST' && (
+            <div className="mt-8 pt-8 border-t border-border">
+              <h2 className="text-lg font-semibold mb-2">Become a host</h2>
+              <p className="text-muted-foreground text-sm mb-4">Start hosting and earn money from your space.</p>
+              <Button variant="outline" className="w-full" onClick={() => becomeHost(undefined, { onSuccess: () => toast.success('You are now a host!'), onError: () => toast.error('Failed.') })} disabled={isBecomeHostPending}>
+                {isBecomeHostPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : 'Become a host'}
+              </Button>
             </div>
           )}
-          <label className="absolute -bottom-1 -right-1 w-7 h-7 bg-gray-900 rounded-full flex items-center justify-center cursor-pointer hover:bg-gray-700 transition-colors">
-            {uploadingAvatar ? (
-              <div className="w-3 h-3 border-t-2 border-white rounded-full animate-spin" />
-            ) : (
-              <FiCamera className="w-3.5 h-3.5 text-white" />
-            )}
-            <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
-          </label>
         </div>
-        <div>
-          <p className="font-semibold text-gray-900">{user.firstName} {user.lastName}</p>
-          <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
-            <FiMail className="w-3.5 h-3.5" />
-            {user.email}
-          </p>
-          <span className="inline-block mt-1 text-xs font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-            {user.role}
-          </span>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label">First name</label>
-            <input
-              type="text"
-              value={form.firstName}
-              onChange={(e) => setForm((p) => ({ ...p, firstName: e.target.value }))}
-              required
-              className="input-field"
-            />
-          </div>
-          <div>
-            <label className="label">Last name</label>
-            <input
-              type="text"
-              value={form.lastName}
-              onChange={(e) => setForm((p) => ({ ...p, lastName: e.target.value }))}
-              required
-              className="input-field"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label className="label">Email</label>
-          <input
-            type="email"
-            value={user.email}
-            disabled
-            className="input-field opacity-60 cursor-not-allowed bg-gray-50"
-          />
-          <p className="text-xs text-gray-400 mt-1">Email cannot be changed.</p>
-        </div>
-
-        <div>
-          <label className="label">Phone number</label>
-          <div className="relative">
-            <FiPhone className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-            <input
-              type="tel"
-              value={form.phone}
-              onChange={(e) => setForm((p) => ({ ...p, phone: e.target.value }))}
-              placeholder="+1 (555) 000-0000"
-              className="input-field pl-10"
-            />
-          </div>
-        </div>
-
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={isPending || uploadingAvatar}
-            className="w-full btn-primary disabled:opacity-60"
-          >
-            {isPending ? 'Saving...' : 'Save changes'}
-          </button>
-        </div>
-      </form>
+      </main>
+      <Footer />
     </div>
   )
 }
