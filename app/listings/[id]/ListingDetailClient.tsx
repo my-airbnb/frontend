@@ -191,7 +191,11 @@ export default function ListingDetailClient({ id }: Props) {
           <div>
             <h3 className="text-xl font-semibold mb-4">Where you&apos;ll be</h3>
             <p className="text-muted-foreground mb-3">
-              <MapPin className="inline h-4 w-4 mr-1" />{listing.address}, {listing.city}, {listing.country}
+              <MapPin className="inline h-4 w-4 mr-1" />
+              {[listing.address, listing.city, listing.country]
+                .filter(Boolean)
+                .filter((part, i, arr) => !arr.slice(0, i).some((p) => p.toLowerCase() === part.toLowerCase()))
+                .join(', ')}
             </p>
             {listing.lat && listing.lng ? (
               <ListingMap lat={listing.lat} lng={listing.lng} title={listing.title} address={`${listing.address}, ${listing.city}`} />
