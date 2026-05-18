@@ -25,10 +25,9 @@ export const useConversationMessages = (conversationId: string) => {
 
 export const useSendMessage = () => {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: async (payload: CreateMessagePayload): Promise<Message> => {
-      const response = await apiClient.post<Message>(`/conversations/message`, payload)
+      const response = await apiClient.post<Message>('/conversations/message', payload)
       return response.data
     },
     onSuccess: (_, variables) => {

@@ -1,337 +1,273 @@
-'use client'
+"use client"
 
-import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Image from 'next/image'
-import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import { useQuery } from '@tanstack/react-query'
-import apiClient from '@/lib/axios'
-import { Experience } from '@/types'
-import {
-  FiClock, FiUsers, FiGlobe, FiMapPin, FiChevronLeft,
-  FiChevronRight, FiX, FiCheck, FiShoppingBag, FiArrowLeft,
-} from 'react-icons/fi'
-import useAuthStore from '@/store/authStore'
-import { useCreateBooking } from '@/hooks/useBookings'
-import toast from 'react-hot-toast'
+import { useParams, useRouter } from "next/navigation"
+import Image from "next/image"
+import Link from "next/link"
+import { ArrowLeft, Star, Clock, Users, MapPin, Check } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+import { Badge } from "@/components/ui/badge"
+import { Header } from "@/components/header"
+import { Footer } from "@/components/footer"
 
-const ListingMap = dynamic(() => import('@/components/ListingMap'), { ssr: false })
-
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1533105079780-92b9be482077?w=800'
+const experiences: Record<string, {
+  id: string
+  title: string
+  location: string
+  image: string
+  price: number
+  rating: number
+  reviewCount: number
+  duration: string
+  maxGuests: number
+  category: string
+  host: string
+  hostAvatar: string
+  description: string
+  includes: string[]
+  highlights: string[]
+  reviews: { author: string; rating: number; comment: string; date: string }[]
+}> = {
+  "1": {
+    id: "1",
+    title: "Wine Tasting in Napa Valley",
+    location: "Napa, California",
+    image: "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=1200&q=80",
+    price: 150,
+    rating: 4.98,
+    reviewCount: 234,
+    duration: "3 hours",
+    maxGuests: 8,
+    category: "food",
+    host: "Marcus",
+    hostAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&q=80",
+    description: "Join me for an intimate wine tasting experience in the heart of Napa Valley. We'll visit three boutique wineries, tasting carefully selected wines while I share the stories behind each bottle — the grapes, the terroir, and the winemakers. This is not a typical tourist wine tour; it's a deep dive into what makes Napa's wines truly special.",
+    includes: ["Transportation between wineries", "6 wine tastings", "Cheese and charcuterie pairing", "Take-home bottle", "Expert guided commentary"],
+    highlights: ["Visit 3 exclusive boutique wineries", "Meet the winemakers", "Stunning vineyard views", "Small group (max 8)"],
+    reviews: [
+      { author: "Sarah M.", rating: 5, comment: "Absolutely incredible experience! Marcus clearly knows and loves wine. The wineries we visited were off the beaten path — places I never would have found on my own.", date: "March 2026" },
+      { author: "Tom K.", rating: 5, comment: "The perfect birthday gift for my wife. Marcus made everyone feel welcome and his knowledge is exceptional.", date: "February 2026" },
+    ],
+  },
+  "2": {
+    id: "2",
+    title: "Sunrise Yoga on the Beach",
+    location: "Malibu, California",
+    image: "https://images.unsplash.com/photo-1506126613408-eca07ce68773?w=1200&q=80",
+    price: 45,
+    rating: 4.95,
+    reviewCount: 189,
+    duration: "1.5 hours",
+    maxGuests: 15,
+    category: "wellness",
+    host: "Luna",
+    hostAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&q=80",
+    description: "Start your day with an invigorating yoga session on the shores of Malibu as the sun rises over the Pacific. This all-levels class is designed to energize your body and calm your mind. No experience needed — just bring yourself and an open heart.",
+    includes: ["Yoga mat provided", "Herbal tea after class", "Meditation session", "Breathwork guide"],
+    highlights: ["All levels welcome", "Breathtaking ocean views", "Small intimate group", "Certified instructor"],
+    reviews: [
+      { author: "Emma L.", rating: 5, comment: "Luna is a magical teacher. The sunrise, the sound of waves, the gentle flow — I've never felt so peaceful.", date: "April 2026" },
+    ],
+  },
+  "3": {
+    id: "3",
+    title: "Street Art Walking Tour",
+    location: "Brooklyn, New York",
+    image: "https://images.unsplash.com/photo-1569545568164-e4c72e1a0b7e?w=1200&q=80",
+    price: 35,
+    rating: 4.92,
+    reviewCount: 312,
+    duration: "2 hours",
+    maxGuests: 12,
+    category: "arts",
+    host: "Diego",
+    hostAvatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&q=80",
+    description: "Explore Brooklyn's vibrant street art scene with local artist Diego. From hidden murals to iconic pieces in Bushwick, you'll learn the history, techniques, and stories behind some of the city's most striking works. Diego has been painting the streets of Brooklyn for over a decade and knows every wall.",
+    includes: ["Expert guide", "Art history context", "Map of key murals", "Photo opportunities"],
+    highlights: ["Hidden gems off the tourist trail", "Meet local artists", "Bushwick Collective", "Williamsburg bridges"],
+    reviews: [
+      { author: "James R.", rating: 5, comment: "Diego is passionate, knowledgeable, and hilarious. We saw art I walk past every day but never really saw before.", date: "May 2026" },
+      { author: "Priya S.", rating: 4, comment: "Great tour — very informative and fun. Would recommend bringing comfortable shoes!", date: "April 2026" },
+    ],
+  },
+}
 
 export default function ExperienceDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const params = useParams()
   const router = useRouter()
-  const { isAuthenticated } = useAuthStore()
-  const { mutateAsync: createBooking, isPending: isBooking } = useCreateBooking()
+  const id = params.id as string
 
-  const [lightboxOpen, setLightboxOpen] = useState(false)
-  const [lightboxIdx, setLightboxIdx] = useState(0)
-  const [guests, setGuests] = useState(1)
-  const [date, setDate] = useState('')
+  const experience = experiences[id]
 
-  const { data: experience, isLoading, error } = useQuery({
-    queryKey: ['experience', id],
-    queryFn: async (): Promise<Experience> => {
-      const res = await apiClient.get<Experience>(`/experiences/${id}`)
-      return res.data
-    },
-    enabled: !!id,
-  })
-
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (!lightboxOpen) return
-      if (e.key === 'Escape') setLightboxOpen(false)
-      if (e.key === 'ArrowLeft') setLightboxIdx((i) => Math.max(0, i - 1))
-      if (e.key === 'ArrowRight') setLightboxIdx((i) => Math.min((experience?.photos.length ?? 1) - 1, i + 1))
-    }
-    window.addEventListener('keydown', handler)
-    return () => window.removeEventListener('keydown', handler)
-  }, [lightboxOpen, experience?.photos.length])
-
-  const handleBook = async () => {
-    if (!isAuthenticated) {
-      router.push('/login')
-      return
-    }
-    if (!date) {
-      toast.error('Please select a date')
-      return
-    }
-    if (!experience) return
-    try {
-      const total = experience.pricePerPerson * guests
-      // Experiences are single-day; checkOut must be after checkIn per booking service validation
-      const checkOutDate = new Date(date)
-      checkOutDate.setDate(checkOutDate.getDate() + 1)
-      const checkOut = checkOutDate.toISOString().split('T')[0]
-      const booking = await createBooking({
-        experienceId: experience.id,
-        type: 'EXPERIENCE',
-        checkIn: date,
-        checkOut,
-        nbGuests: guests,
-        totalPrice: total,
-      })
-      router.push(`/checkout/${booking.id}`)
-    } catch {
-      toast.error('Failed to book experience. Please try again.')
-    }
-  }
-
-  if (isLoading) {
+  if (!experience) {
     return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 animate-pulse">
-        <div className="h-8 bg-gray-200 rounded w-1/2 mb-6" />
-        <div className="grid grid-cols-2 gap-2 rounded-2xl overflow-hidden h-72 mb-8">
-          <div className="bg-gray-200" />
-          <div className="bg-gray-200" />
-        </div>
-        <div className="h-6 bg-gray-200 rounded w-3/4 mb-3" />
-        <div className="h-4 bg-gray-200 rounded w-1/2 mb-6" />
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-4 bg-gray-100 rounded" />)}
-        </div>
+      <div className="min-h-screen flex flex-col bg-background">
+        <Header />
+        <main className="flex-1 flex flex-col items-center justify-center gap-4">
+          <div className="text-6xl">🔍</div>
+          <h2 className="text-2xl font-semibold">Experience not found</h2>
+          <Button onClick={() => router.push('/experiences')}>Browse Experiences</Button>
+        </main>
+        <Footer />
       </div>
     )
   }
-
-  if (error || !experience) {
-    return (
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-        <div className="text-5xl mb-4">😕</div>
-        <h2 className="text-xl font-semibold text-gray-700 mb-2">Experience not found</h2>
-        <Link href="/experiences" className="text-primary hover:underline">
-          ← Back to experiences
-        </Link>
-      </div>
-    )
-  }
-
-  const photos = experience.photos?.length ? experience.photos : [PLACEHOLDER_IMAGE]
-  const durationH = Math.floor(experience.durationMinutes / 60)
-  const durationM = experience.durationMinutes % 60
-  const durationLabel = `${durationH > 0 ? `${durationH}h` : ''}${durationM > 0 ? ` ${durationM}m` : ''}`
 
   return (
-    <>
-      {/* Lightbox */}
-      {lightboxOpen && (
-        <div className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center" onClick={() => setLightboxOpen(false)}>
-          <button className="absolute top-4 right-4 text-white p-2" onClick={() => setLightboxOpen(false)}>
-            <FiX className="w-7 h-7" />
-          </button>
-          <button
-            className="absolute left-4 text-white p-2 disabled:opacity-30"
-            onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => Math.max(0, i - 1)) }}
-            disabled={lightboxIdx === 0}
-          >
-            <FiChevronLeft className="w-8 h-8" />
-          </button>
-          <div className="relative w-full max-w-4xl h-[80vh] mx-16" onClick={(e) => e.stopPropagation()}>
-            <Image
-              src={photos[lightboxIdx]}
-              alt={experience.title}
-              fill
-              className="object-contain"
-              sizes="100vw"
-            />
+    <div className="min-h-screen flex flex-col bg-background">
+      <Header />
+
+      <main className="flex-1">
+        <div className="container mx-auto max-w-4xl px-4 py-8">
+          <Link href="/experiences" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-6 transition-colors">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Experiences
+          </Link>
+
+          {/* Hero image */}
+          <div className="relative aspect-[16/9] rounded-2xl overflow-hidden mb-8">
+            <Image src={experience.image} alt={experience.title} fill className="object-cover" priority sizes="(max-width: 1024px) 100vw, 896px" />
+            <Badge className="absolute top-4 left-4 capitalize">{experience.category}</Badge>
           </div>
-          <button
-            className="absolute right-4 text-white p-2 disabled:opacity-30"
-            onClick={(e) => { e.stopPropagation(); setLightboxIdx((i) => Math.min(photos.length - 1, i + 1)) }}
-            disabled={lightboxIdx === photos.length - 1}
-          >
-            <FiChevronRight className="w-8 h-8" />
-          </button>
-          <div className="absolute bottom-4 text-white text-sm">
-            {lightboxIdx + 1} / {photos.length}
-          </div>
-        </div>
-      )}
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Back */}
-        <button onClick={() => router.back()} className="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-800 mb-6">
-          <FiArrowLeft className="w-4 h-4" />
-          Back
-        </button>
-
-        {/* Title */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{experience.title}</h1>
-        <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500 mb-6">
-          <span className="flex items-center gap-1"><FiMapPin className="w-4 h-4" />{experience.location}</span>
-          <span className="capitalize px-2 py-0.5 bg-gray-100 rounded-full text-xs font-medium">{experience.category}</span>
-        </div>
-
-        {/* Photo gallery */}
-        <div
-          className="grid grid-cols-2 sm:grid-cols-3 gap-2 rounded-2xl overflow-hidden mb-10 cursor-pointer"
-          style={{ maxHeight: 400 }}
-        >
-          {photos.slice(0, 3).map((url, i) => (
-            <div
-              key={i}
-              className={`relative overflow-hidden bg-gray-100 ${i === 0 ? 'col-span-2 row-span-2 sm:col-span-1' : ''}`}
-              style={{ minHeight: i === 0 ? 240 : 120 }}
-              onClick={() => { setLightboxIdx(i); setLightboxOpen(true) }}
-            >
-              <Image
-                src={url}
-                alt={`${experience.title} ${i + 1}`}
-                fill
-                className="object-cover hover:scale-105 transition-transform duration-300"
-                sizes="(max-width: 640px) 50vw, 33vw"
-              />
-              {i === 2 && photos.length > 3 && (
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white font-semibold text-lg">
-                  +{photos.length - 3} more
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Left: details */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Key info */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              {[
-                { icon: <FiClock className="w-5 h-5" />, label: 'Duration', value: durationLabel },
-                { icon: <FiUsers className="w-5 h-5" />, label: 'Group size', value: `${experience.minGroupSize}–${experience.maxGroupSize}` },
-                { icon: <FiGlobe className="w-5 h-5" />, label: 'Language', value: experience.language },
-                { icon: <FiShoppingBag className="w-5 h-5" />, label: 'Price', value: `$${experience.pricePerPerson}/person` },
-              ].map((item) => (
-                <div key={item.label} className="bg-gray-50 rounded-xl p-4 flex flex-col gap-1">
-                  <div className="text-gray-400">{item.icon}</div>
-                  <div className="text-xs text-gray-500">{item.label}</div>
-                  <div className="text-sm font-semibold text-gray-900">{item.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Description */}
-            <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-3">About this experience</h2>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">{experience.description}</p>
-            </div>
-
-            {/* What's included */}
-            {experience.whatIncluded && (
+          <div className="grid gap-8 lg:grid-cols-3">
+            {/* Main content */}
+            <div className="lg:col-span-2 space-y-8">
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-3">What&apos;s included</h2>
+                <h1 className="text-2xl font-semibold text-foreground sm:text-3xl">{experience.title}</h1>
+                <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-4 w-4" /> {experience.location}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" /> {experience.duration}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Users className="h-4 w-4" /> Up to {experience.maxGuests} guests
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center gap-1">
+                  <Star className="h-4 w-4 fill-primary text-primary" />
+                  <span className="font-medium">{experience.rating}</span>
+                  <span className="text-muted-foreground">({experience.reviewCount} reviews)</span>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Host */}
+              <div className="flex items-center gap-4">
+                <div className="relative h-14 w-14 rounded-full overflow-hidden bg-muted shrink-0">
+                  <Image src={experience.hostAvatar} alt={experience.host} fill className="object-cover" />
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">Hosted by</p>
+                  <p className="font-semibold text-foreground">{experience.host}</p>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Description */}
+              <div>
+                <h2 className="text-lg font-semibold mb-3">About this experience</h2>
+                <p className="text-muted-foreground leading-relaxed">{experience.description}</p>
+              </div>
+
+              {/* Highlights */}
+              <div>
+                <h2 className="text-lg font-semibold mb-3">Highlights</h2>
                 <ul className="space-y-2">
-                  {experience.whatIncluded.split(',').map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-600">
-                      <FiCheck className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                      {item.trim()}
+                  {experience.highlights.map((h, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span className="text-muted-foreground">{h}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-            )}
 
-            {/* What to bring */}
-            {experience.whatToBring && (
+              {/* What's included */}
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-3">What to bring</h2>
+                <h2 className="text-lg font-semibold mb-3">What&apos;s included</h2>
                 <ul className="space-y-2">
-                  {experience.whatToBring.split(',').map((item, i) => (
-                    <li key={i} className="flex items-start gap-2 text-gray-600">
-                      <span className="text-gray-400 font-bold flex-shrink-0">·</span>
-                      {item.trim()}
+                  {experience.includes.map((item, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <span className="text-muted-foreground">{item}</span>
                     </li>
                   ))}
                 </ul>
               </div>
-            )}
 
-            {/* Map */}
-            {experience.lat && experience.lng && (
+              <Separator />
+
+              {/* Reviews */}
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-3">Where you&apos;ll be</h2>
-                <ListingMap
-                  lat={experience.lat}
-                  lng={experience.lng}
-                  title={experience.title}
-                  address={experience.location}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Right: booking card */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 bg-white border border-gray-200 rounded-2xl shadow-lg p-6">
-              <div className="mb-4">
-                <span className="text-2xl font-bold text-gray-900">${experience.pricePerPerson}</span>
-                <span className="text-gray-500 text-sm"> / person</span>
-              </div>
-
-              <div className="space-y-3 mb-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                    Date
-                  </label>
-                  <input
-                    type="date"
-                    value={date}
-                    onChange={(e) => setDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary focus:border-transparent outline-none"
-                  />
+                <h2 className="text-lg font-semibold mb-4">
+                  <span className="flex items-center gap-2">
+                    <Star className="h-5 w-5 fill-primary text-primary" />
+                    {experience.rating} · {experience.reviewCount} reviews
+                  </span>
+                </h2>
+                <div className="space-y-6">
+                  {experience.reviews.map((review, i) => (
+                    <div key={i}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center text-sm font-medium">
+                          {review.author[0]}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">{review.author}</p>
+                          <p className="text-xs text-muted-foreground">{review.date}</p>
+                        </div>
+                        <div className="ml-auto flex items-center gap-0.5">
+                          {[...Array(review.rating)].map((_, j) => (
+                            <Star key={j} className="h-3 w-3 fill-primary text-primary" />
+                          ))}
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{review.comment}</p>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-700 mb-1 uppercase tracking-wide">
-                    Guests
-                  </label>
-                  <div className="flex items-center gap-3 border border-gray-300 rounded-xl px-3 py-2">
-                    <button
-                      onClick={() => setGuests((g) => Math.max(experience.minGroupSize, g - 1))}
-                      className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-500 disabled:opacity-30"
-                      disabled={guests <= experience.minGroupSize}
-                    >
-                      -
-                    </button>
-                    <span className="flex-1 text-center text-sm font-medium">{guests}</span>
-                    <button
-                      onClick={() => setGuests((g) => Math.min(experience.maxGroupSize, g + 1))}
-                      className="w-7 h-7 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-gray-500 disabled:opacity-30"
-                      disabled={guests >= experience.maxGroupSize}
-                    >
-                      +
-                    </button>
+              </div>
+            </div>
+
+            {/* Booking card */}
+            <div className="lg:sticky lg:top-24 lg:self-start">
+              <div className="rounded-2xl border border-border bg-card shadow-lg p-6">
+                <div className="mb-4">
+                  <span className="text-2xl font-bold">${experience.price}</span>
+                  <span className="text-muted-foreground text-sm"> / person</span>
+                </div>
+                <div className="flex items-center gap-1 text-sm mb-6">
+                  <Star className="h-4 w-4 fill-primary text-primary" />
+                  <span className="font-medium">{experience.rating}</span>
+                  <span className="text-muted-foreground">({experience.reviewCount} reviews)</span>
+                </div>
+                <div className="space-y-3 text-sm text-muted-foreground mb-6">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" /> {experience.duration}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4" /> Up to {experience.maxGuests} guests
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4" /> {experience.location}
                   </div>
                 </div>
+                <Button className="w-full h-12 text-base" onClick={() => alert('Booking for experiences coming soon!')}>
+                  Book Experience
+                </Button>
+                <p className="text-center text-xs text-muted-foreground mt-3">You won&apos;t be charged yet</p>
               </div>
-
-              {/* Price breakdown */}
-              <div className="border-t border-gray-100 pt-4 mb-4 space-y-2 text-sm">
-                <div className="flex justify-between text-gray-600">
-                  <span>${experience.pricePerPerson} × {guests} guest{guests > 1 ? 's' : ''}</span>
-                  <span>${(experience.pricePerPerson * guests).toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between font-bold text-gray-900 border-t border-gray-100 pt-2 mt-2">
-                  <span>Total</span>
-                  <span>${(experience.pricePerPerson * guests).toFixed(2)}</span>
-                </div>
-              </div>
-
-              <button
-                onClick={handleBook}
-                disabled={isBooking}
-                className="w-full btn-primary py-3 text-sm font-semibold rounded-xl disabled:opacity-60"
-              >
-                {isBooking ? 'Booking...' : 'Reserve'}
-              </button>
-              <p className="text-center text-xs text-gray-400 mt-2">You won&apos;t be charged yet</p>
             </div>
           </div>
         </div>
-      </div>
-    </>
+      </main>
+
+      <Footer />
+    </div>
   )
 }

@@ -40,7 +40,6 @@ export const useGetUserByEmail = (email: string) => {
 
 export const useBecomeHost = () => {
   const { setAuth, token } = useAuthStore()
-
   return useMutation({
     mutationFn: async (): Promise<User> => {
       const response = await apiClient.post<User>('/auth/become-host')
@@ -117,10 +116,8 @@ const useAuth = () => {
   })
 
   return {
-    login: (email: string, password: string) =>
-      loginMutation.mutateAsync({ email, password }),
-    register: (data: RegisterPayload) =>
-      registerMutation.mutateAsync(data),
+    login: (email: string, password: string) => loginMutation.mutateAsync({ email, password }),
+    register: (data: RegisterPayload) => registerMutation.mutateAsync(data),
     logout: () => logoutMutation.mutate(),
     isLoginLoading: loginMutation.isPending,
     isRegisterLoading: registerMutation.isPending,

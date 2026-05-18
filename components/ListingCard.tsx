@@ -3,14 +3,13 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useState } from 'react'
-import { AiFillHeart, AiOutlineHeart } from 'react-icons/ai'
-import { FaStar } from 'react-icons/fa'
+import { Heart, Star } from 'lucide-react'
 import { Listing } from '@/types'
 import { useReviewStats } from '@/hooks/useReviews'
 import useWishlistStore from '@/store/wishlistStore'
+import { cn } from '@/lib/utils'
 
-const PLACEHOLDER_IMAGE =
-  'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800'
+const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800'
 
 interface ListingCardProps {
   listing: Listing
@@ -23,21 +22,12 @@ const ListingCard = ({ listing }: ListingCardProps) => {
   const { data: reviewStats } = useReviewStats('LISTING', listing.id)
 
   const photoUrl =
-    listing.photos && listing.photos.length > 0 && !imgError
-      ? listing.photos[0]
-      : PLACEHOLDER_IMAGE
-
-  const toggleFavorite = (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    toggle(listing.id)
-  }
+    listing.photos?.length > 0 && !imgError ? listing.photos[0] : PLACEHOLDER_IMAGE
 
   return (
     <Link href={`/listings/${listing.id}`} className="group block">
       <div className="relative">
-        {/* Image */}
-        <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-gray-100">
+        <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-muted">
           <Image
             src={photoUrl}
             alt={listing.title}
@@ -46,50 +36,37 @@ const ListingCard = ({ listing }: ListingCardProps) => {
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             onError={() => setImgError(true)}
           />
-          {/* Favorite button */}
           <button
-            onClick={toggleFavorite}
-            className="absolute top-3 right-3 z-10 p-1 transition-transform hover:scale-110"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(listing.id) }}
+            className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
             aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
           >
-            {isFavorited ? (
-              <AiFillHeart className="w-6 h-6 text-primary drop-shadow-md" />
-            ) : (
-              <AiOutlineHeart className="w-6 h-6 text-white drop-shadow-md" />
-            )}
+            <Heart className={cn('h-4 w-4', isFavorited ? 'fill-destructive text-destructive' : 'text-foreground')} />
           </button>
-
-          {/* Instant Book badge */}
           {listing.instantBook && (
-            <span className="absolute top-3 left-3 bg-white text-xs font-semibold px-2 py-1 rounded-full shadow">
+            <span className="absolute top-3 left-3 bg-card text-xs font-semibold px-2 py-1 rounded-full shadow">
               Instant Book
             </span>
           )}
         </div>
 
-        {/* Details */}
-        <div className="mt-3 px-1">
-          <div className="flex justify-between items-start">
-            <h3 className="font-semibold text-gray-900 truncate pr-2 flex-1">
+        <div className="mt-3">
+          <div className="flex justify-between items-start gap-2">
+            <h3 className="font-semibold text-foreground truncate flex-1">
               {listing.city}, {listing.country}
             </h3>
             <div className="flex items-center gap-1 flex-shrink-0">
-              <FaStar className="w-3 h-3 text-gray-900" />
-              <span className="text-sm font-medium text-gray-900">
-                {reviewStats && reviewStats.count > 0
-                  ? reviewStats.averageRating.toFixed(1)
-                  : 'New'}
+              <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
+              <span className="text-sm font-medium">
+                {reviewStats?.count ? reviewStats.averageRating.toFixed(1) : 'New'}
               </span>
             </div>
           </div>
-
-          <p className="text-sm text-gray-500 mt-0.5 truncate">{listing.title}</p>
-
-          <p className="text-sm text-gray-500 capitalize">{listing.type}</p>
-
-          <p className="mt-2 text-sm font-semibold text-gray-900">
+          <p className="text-sm text-muted-foreground mt-0.5 truncate">{listing.title}</p>
+          <p className="text-sm text-muted-foreground capitalize">{listing.type}</p>
+          <p className="mt-1.5 text-sm font-semibold text-foreground">
             <span className="text-base">${listing.pricePerNight}</span>
-            <span className="font-normal text-gray-500"> / night</span>
+            <span className="font-normal text-muted-foreground"> / night</span>
           </p>
         </div>
       </div>

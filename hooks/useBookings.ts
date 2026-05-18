@@ -14,7 +14,6 @@ export const useBookings = () => {
 
 export const useCreateBooking = () => {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: async (payload: CreateBookingPayload): Promise<Booking> => {
       const response = await apiClient.post<Booking>('/bookings', payload)
@@ -28,7 +27,6 @@ export const useCreateBooking = () => {
 
 export const useCancelBooking = () => {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: async (bookingId: string): Promise<void> => {
       await apiClient.put(`/bookings/${bookingId}/cancel`, {})
@@ -41,7 +39,6 @@ export const useCancelBooking = () => {
 
 export const useConfirmBooking = () => {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: async (bookingId: string): Promise<void> => {
       await apiClient.put(`/bookings/${bookingId}/confirm`)
@@ -55,7 +52,6 @@ export const useConfirmBooking = () => {
 
 export const useRejectBooking = () => {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: async (bookingId: string): Promise<void> => {
       await apiClient.put(`/bookings/${bookingId}/reject`)

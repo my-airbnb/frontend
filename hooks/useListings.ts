@@ -10,18 +10,12 @@ export interface ListingsPage {
   size: number
 }
 
-// Keep old name for backward compatibility
 type ListingsResponse = ListingsPage
 
 const useListings = (filters?: ListingFilters) => {
   const queryClient = useQueryClient()
 
-  const {
-    data,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['listings', filters],
     queryFn: async () => {
       const params = new URLSearchParams()
@@ -36,10 +30,7 @@ const useListings = (filters?: ListingFilters) => {
       const response = await apiClient.get<ListingsResponse | Listing[]>(
         `/listings?${params.toString()}`
       )
-      // Handle both paginated and array responses
-      if (Array.isArray(response.data)) {
-        return response.data
-      }
+      if (Array.isArray(response.data)) return response.data
       return (response.data as ListingsResponse).content || []
     },
   })
@@ -82,15 +73,12 @@ export const useHostListings = () => {
     queryKey: ['host-listings'],
     queryFn: async () => {
       const response = await apiClient.get<Listing[] | ListingsResponse>('/listings/host/me')
-      if (Array.isArray(response.data)) {
-        return response.data
-      }
+      if (Array.isArray(response.data)) return response.data
       return (response.data as ListingsResponse).content || []
     },
   })
 }
 
-// Elasticsearch-powered full-text search — used for suggestions when normal search returns 0 results
 export const useListingSearch = (query: string, enabled = true) => {
   return useQuery({
     queryKey: ['listing-search', query],
@@ -118,7 +106,6 @@ export const useListingsInfinite = (filters?: ListingFilters) => {
       params.append('page', String(pageParam ?? 0))
       params.append('size', '12')
       const response = await apiClient.get<ListingsPage | Listing[]>(`/listings?${params.toString()}`)
-      // Backend may return plain array or Spring Page object
       if (Array.isArray(response.data)) {
         const arr = response.data as Listing[]
         return { content: arr, totalElements: arr.length, totalPages: 1, number: 0, size: arr.length }

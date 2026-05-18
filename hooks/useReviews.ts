@@ -15,19 +15,14 @@ export const useListingReviews = (listingId: string) => {
 
 export const useCreateReview = () => {
   const queryClient = useQueryClient()
-
   return useMutation({
     mutationFn: async (payload: CreateReviewPayload): Promise<Review> => {
       const response = await apiClient.post<Review>('/reviews', payload)
       return response.data
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['reviews', 'listing', variables.listingId],
-      })
-      queryClient.invalidateQueries({
-        queryKey: ['review-stats', 'LISTING', variables.listingId],
-      })
+      queryClient.invalidateQueries({ queryKey: ['reviews', 'listing', variables.listingId] })
+      queryClient.invalidateQueries({ queryKey: ['review-stats', 'LISTING', variables.listingId] })
     },
   })
 }

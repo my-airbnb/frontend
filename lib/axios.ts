@@ -7,7 +7,6 @@ const apiClient = axios.create({
   },
 })
 
-// Request interceptor: attach Authorization Bearer token from localStorage
 apiClient.interceptors.request.use(
   (config) => {
     if (typeof window !== 'undefined') {
@@ -18,12 +17,9 @@ apiClient.interceptors.request.use(
     }
     return config
   },
-  (error) => {
-    return Promise.reject(error)
-  }
+  (error) => Promise.reject(error)
 )
 
-// Response interceptor: on 401, clear localStorage and redirect to /login
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
