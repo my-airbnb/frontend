@@ -90,7 +90,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
           <Star className="h-4 w-4 fill-foreground text-foreground" />
           <span className="font-medium">
             {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            {reviewStats && (reviewStats as any).count > 0 ? reviewStats.averageRating.toFixed(1) : 'New'}
+            {reviewStats && reviewStats.totalReviews > 0 && reviewStats.averageRating != null ? reviewStats.averageRating.toFixed(1) : 'New'}
           </span>
         </div>
       </div>
