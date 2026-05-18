@@ -1,10 +1,10 @@
 "use client"
 
-import { useCallback, useRef, useEffect } from "react"
+import { useCallback, useRef, useEffect, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Map, Loader2 } from "lucide-react"
-import { PropertyCard } from "@/components/property-card"
+import { Map, Loader as Loader2 } from "lucide-react"
+import ListingCard from "@/components/ListingCard"
 import { useListingsInfinite } from "@/hooks/useListings"
 import { ListingFilters } from "@/types"
 
@@ -12,7 +12,7 @@ export function PropertyGrid() {
   const searchParams = useSearchParams()
   const loadMoreRef = useRef<HTMLDivElement>(null)
 
-  const filters: ListingFilters = {
+  const filters: ListingFilters = useMemo(() => ({
     city: searchParams.get('city') || undefined,
     minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
     maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
@@ -20,7 +20,7 @@ export function PropertyGrid() {
     checkOut: searchParams.get('checkOut') || undefined,
     guests: searchParams.get('guests') ? Number(searchParams.get('guests')) : undefined,
     type: searchParams.get('type') || undefined,
-  }
+  }), [searchParams])
 
   const {
     data,
@@ -29,6 +29,7 @@ export function PropertyGrid() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    refetch,
   } = useListingsInfinite(filters)
 
   const listings = data?.pages.flatMap((p) => p.content) ?? []
@@ -78,7 +79,7 @@ export function PropertyGrid() {
       <section className="py-16">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground">Failed to load listings. Please try again.</p>
-          <Button variant="outline" className="mt-4" onClick={() => window.location.reload()}>
+          <Button variant="outline" className="mt-4" onClick={() => refetch()}>
             Retry
           </Button>
         </div>
@@ -104,25 +105,11 @@ export function PropertyGrid() {
           <h2 className="text-2xl font-semibold text-foreground">
             {filters.city ? `Places in ${filters.city}` : 'Popular places to stay'}
           </h2>
-          <Button variant="outline" className="hidden md:flex gap-2">
-            <Map className="h-4 w-4" />
-            Show map
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {listings.map((listing) => (
-            <PropertyCard
-              key={listing.id}
-              id={listing.id}
-              title={listing.title}
-              location={`${listing.city}, ${listing.country}`}
-              images={listing.photos.length > 0 ? listing.photos : ['/placeholder.jpg']}
-              price={listing.pricePerNight}
-              rating={0}
-              reviewCount={0}
-              listingId={listing.id}
-            />
+            <ListingCard key={listing.id} listing={listing} />
           ))}
         </div>
 

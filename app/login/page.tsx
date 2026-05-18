@@ -2,14 +2,18 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Home, Mail, Lock, AlertCircle, Loader2 } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
+import { Hop as Home, Mail, Lock, CircleAlert as AlertCircle, Loader as Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import useAuth from '@/hooks/useAuth'
+import { getApiErrorMessage } from '@/lib/api-utils'
 
 export default function LoginPage() {
+  const searchParams = useSearchParams()
+  const redirect = searchParams.get('redirect') || '/'
   const { login, isLoginLoading, loginError } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -23,9 +27,9 @@ export default function LoginPage() {
     }
   }
 
-  const errorMessage =
-    (loginError as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-    (loginError ? 'Invalid email or password. Please try again.' : null)
+  const errorMessage = loginError
+    ? getApiErrorMessage(loginError, 'Invalid email or password. Please try again.')
+    : null
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4">
@@ -102,7 +106,7 @@ export default function LoginPage() {
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Don&apos;t have an account?{' '}
-              <Link href="/register" className="text-primary font-medium hover:underline">
+              <Link href={`/register${redirect !== '/' ? `?redirect=${redirect}` : ''}`} className="text-primary font-medium hover:underline">
                 Sign up
               </Link>
             </p>

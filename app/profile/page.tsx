@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Mail, Phone, Camera, Loader2 } from 'lucide-react'
+import { ArrowLeft, Mail, Phone, Camera, Loader as Loader2 } from 'lucide-react'
 import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { useUpdateProfile } from '@/hooks/useAuth'
@@ -17,6 +17,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import { toast } from 'sonner'
+import { getApiErrorMessage } from '@/lib/api-utils'
 
 async function uploadAvatar(file: File): Promise<string> {
   const formData = new FormData()
@@ -143,7 +144,7 @@ export default function ProfilePage() {
             <div className="mt-8 pt-8 border-t border-border">
               <h2 className="text-lg font-semibold mb-2">Become a host</h2>
               <p className="text-muted-foreground text-sm mb-4">Start hosting and earn money from your space.</p>
-              <Button variant="outline" className="w-full" onClick={() => becomeHost(undefined, { onSuccess: () => toast.success('You are now a host!'), onError: () => toast.error('Failed.') })} disabled={isBecomeHostPending}>
+              <Button variant="outline" className="w-full" onClick={() => becomeHost(undefined, { onSuccess: () => toast.success('You are now a host!'), onError: (err) => toast.error(getApiErrorMessage(err, 'Failed to become a host.')) })} disabled={isBecomeHostPending}>
                 {isBecomeHostPending ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Processing...</> : 'Become a host'}
               </Button>
             </div>

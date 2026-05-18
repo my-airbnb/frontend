@@ -13,6 +13,7 @@ export interface User {
 export interface Listing {
   id: string
   hostId: string
+  hostEmail: string
   type: string
   title: string
   description: string
@@ -193,8 +194,6 @@ export interface ReviewStats {
   averageCleanliness?: number | null
   averageCommunication?: number | null
   averageLocation?: number | null
-  /** @deprecated use totalReviews */
-  count?: number
 }
 
 export interface BlockedDateRange {

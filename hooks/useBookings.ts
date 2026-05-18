@@ -6,12 +6,12 @@ import useAuthStore from '@/store/authStore'
 export const useBookings = () => {
   const { user } = useAuthStore()
   return useQuery({
-    queryKey: ['bookings', user?.email],
-    queryFn: async () => {
-      const response = await apiClient.get<Booking[]>('/bookings')
+    queryKey: ['bookings', user?.id],
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<Booking[]>('/bookings', { signal })
       return Array.isArray(response.data) ? response.data : []
     },
-    enabled: !!user?.email,
+    enabled: !!user?.id,
     retry: false,
   })
 }
@@ -71,8 +71,8 @@ export const useRejectBooking = () => {
 export const useListingBookings = (listingId: string) => {
   return useQuery({
     queryKey: ['listing-bookings', listingId],
-    queryFn: async () => {
-      const response = await apiClient.get<Booking[]>(`/bookings/listing/${listingId}`)
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<Booking[]>(`/bookings/listing/${listingId}`, { signal })
       return Array.isArray(response.data) ? response.data : []
     },
     enabled: !!listingId,
@@ -82,8 +82,8 @@ export const useListingBookings = (listingId: string) => {
 export const useBookingById = (bookingId: string) => {
   return useQuery({
     queryKey: ['booking', bookingId],
-    queryFn: async () => {
-      const response = await apiClient.get<Booking>(`/bookings/${bookingId}`)
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<Booking>(`/bookings/${bookingId}`, { signal })
       return response.data
     },
     enabled: !!bookingId,
@@ -93,9 +93,13 @@ export const useBookingById = (bookingId: string) => {
 export const useBookedListingIds = (checkIn?: string, checkOut?: string) => {
   return useQuery({
     queryKey: ['booked-listing-ids', checkIn, checkOut],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
+      const params = new URLSearchParams()
+      if (checkIn) params.append('checkIn', checkIn)
+      if (checkOut) params.append('checkOut', checkOut)
       const response = await apiClient.get<string[]>(
-        `/bookings/booked-listing-ids?checkIn=${checkIn}&checkOut=${checkOut}`
+        `/bookings/booked-listing-ids?${params.toString()}`,
+        { signal }
       )
       return Array.isArray(response.data) ? response.data.filter(Boolean) : []
     },
@@ -107,8 +111,8 @@ export const useBookedListingIds = (checkIn?: string, checkOut?: string) => {
 export const useAllBookings = () => {
   return useQuery({
     queryKey: ['bookings', 'all'],
-    queryFn: async () => {
-      const response = await apiClient.get<Booking[]>('/bookings/all')
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<Booking[]>('/bookings/all', { signal })
       return Array.isArray(response.data) ? response.data : []
     },
   })
@@ -118,8 +122,8 @@ export const useAllListingBookings = (listingIds: string[]) => {
   const results = useQueries({
     queries: listingIds.map((id) => ({
       queryKey: ['listing-bookings', id],
-      queryFn: async () => {
-        const response = await apiClient.get<Booking[]>(`/bookings/listing/${id}`)
+      queryFn: async ({ signal }: { signal: AbortSignal }) => {
+        const response = await apiClient.get<Booking[]>(`/bookings/listing/${id}`, { signal })
         return Array.isArray(response.data) ? response.data : []
       },
       enabled: !!id,
@@ -134,9 +138,10 @@ export const useAllListingBookings = (listingIds: string[]) => {
 export const useBlockedDates = (listingId: string) => {
   return useQuery({
     queryKey: ['blocked-dates', listingId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       const response = await apiClient.get<BlockedDateRange[]>(
-        `/bookings/blocked-dates?listingId=${listingId}`
+        `/bookings/blocked-dates?listingId=${listingId}`,
+        { signal }
       )
       return Array.isArray(response.data) ? response.data : []
     },

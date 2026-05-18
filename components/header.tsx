@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search, Menu, User, Globe, Home, LogOut, LayoutDashboard, Settings, Shield } from "lucide-react"
+import { Search, Menu, User, Hop as Home, LogOut, LayoutDashboard, Settings, Shield, Circle as HelpCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -41,28 +41,25 @@ export function Header() {
         </Link>
 
         {/* Search Bar - Desktop */}
-        <div className="hidden md:flex items-center rounded-full border border-border bg-card px-2 py-1 shadow-sm hover:shadow-md">
-          <button
-            className="px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded-full"
-            onClick={() => router.push('/')}
-          >
+        <div className="hidden md:flex items-center rounded-full border border-border bg-card px-2 py-1 shadow-sm hover:shadow-md cursor-pointer" onClick={() => router.push('/')}>
+          <span className="px-4 py-2 text-sm font-medium text-foreground">
             Anywhere
-          </button>
+          </span>
           <span className="h-6 w-px bg-border" />
-          <button className="px-4 py-2 text-sm font-medium text-foreground hover:bg-secondary rounded-full">
+          <span className="px-4 py-2 text-sm font-medium text-foreground">
             Any week
-          </button>
+          </span>
           <span className="h-6 w-px bg-border" />
-          <button className="px-4 py-2 text-sm text-muted-foreground hover:bg-secondary rounded-full">
+          <span className="px-4 py-2 text-sm text-muted-foreground">
             Add guests
-          </button>
+          </span>
           <Button size="icon" className="h-8 w-8 rounded-full">
             <Search className="h-4 w-4" />
           </Button>
         </div>
 
         {/* Mobile Search */}
-        <Button variant="outline" size="sm" className="md:hidden rounded-full px-3">
+        <Button variant="outline" size="sm" className="md:hidden rounded-full px-3" onClick={() => router.push('/')}>
           <Search className="h-4 w-4 mr-2" />
           <span className="text-sm">Search</span>
         </Button>
@@ -74,9 +71,6 @@ export function Header() {
               Host your place
             </Button>
           </Link>
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex h-9 w-9">
-            <Globe className="h-4 w-4" />
-          </Button>
 
           <ThemeToggle />
 
@@ -167,7 +161,12 @@ export function Header() {
                   <DropdownMenuItem asChild>
                     <Link href="/experiences" className="w-full">Experiences</Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem>Help Center</DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href="https://help.airbnb.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 w-full">
+                      <HelpCircle className="h-4 w-4" />
+                      Help Center
+                    </Link>
+                  </DropdownMenuItem>
                 </>
               )}
             </DropdownMenuContent>

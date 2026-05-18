@@ -6,13 +6,14 @@ import Link from 'next/link'
 import { format, parseISO } from 'date-fns'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements } from '@stripe/react-stripe-js'
-import { Lock, Calendar, Users, MapPin, ArrowLeft, Loader2 } from 'lucide-react'
+import { Lock, Calendar, Users, MapPin, ArrowLeft, Loader as Loader2 } from 'lucide-react'
 import { useCreatePaymentIntent } from '@/hooks/usePayments'
 import { useBookingById } from '@/hooks/useBookings'
 import { useListing } from '@/hooks/useListings'
 import CheckoutForm from '@/components/CheckoutForm'
 import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
+import { getApiErrorMessage } from '@/lib/api-utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
@@ -85,7 +86,7 @@ export default function CheckoutPage() {
     if (!booking) return
     createPaymentIntent({ bookingId, amount: booking.totalPrice })
       .then((res) => { setClientSecret(res.clientSecret); setAmount(res.amount) })
-      .catch((err) => setError(err?.response?.data?.message || 'Failed to initialize payment'))
+      .catch((err) => setError(getApiErrorMessage(err, 'Failed to initialize payment')))
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bookingId, booking?.totalPrice, isAuthenticated, hasHydrated])
 

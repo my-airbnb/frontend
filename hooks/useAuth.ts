@@ -20,8 +20,8 @@ export const useUpdateProfile = () => {
       return response.data
     },
     onSuccess: (updatedUser) => {
-      const currentToken = useAuthStore.getState().token
-      if (currentToken) setAuth(updatedUser, currentToken)
+      const { token, refreshToken } = useAuthStore.getState()
+      if (token) setAuth(updatedUser, token, refreshToken ?? undefined)
     },
   })
 }
@@ -29,8 +29,8 @@ export const useUpdateProfile = () => {
 export const useGetUserByEmail = (email: string) => {
   return useQuery({
     queryKey: ['user-by-email', email],
-    queryFn: async (): Promise<User> => {
-      const response = await apiClient.get<User>(`/auth/users/by-email/${encodeURIComponent(email)}`)
+    queryFn: async ({ signal }): Promise<User> => {
+      const response = await apiClient.get<User>(`/auth/users/by-email/${encodeURIComponent(email)}`, { signal })
       return response.data
     },
     enabled: !!email,
@@ -40,14 +40,16 @@ export const useGetUserByEmail = (email: string) => {
 }
 
 export const useBecomeHost = () => {
-  const { setAuth, token } = useAuthStore()
+  const { setAuth } = useAuthStore()
   return useMutation({
     mutationFn: async (): Promise<User> => {
       const response = await apiClient.post<User>('/auth/become-host')
       return response.data
     },
     onSuccess: (updatedUser) => {
-      setAuth(updatedUser, token || '')
+      const { token, refreshToken } = useAuthStore.getState()
+      if (!token) return
+      setAuth(updatedUser, token, refreshToken ?? undefined)
     },
   })
 }
@@ -79,12 +81,12 @@ const useAuth = () => {
   const loginMutation = useMutation({
     mutationFn: async (payload: LoginPayload) => {
       const authRes = await apiClient.post<AuthResponse>('/auth/login', payload)
-      const token = authRes.data.accessToken
-      const user = await fetchCurrentUser(token)
-      return { user, token }
+      const { accessToken, refreshToken } = authRes.data
+      const user = await fetchCurrentUser(accessToken)
+      return { user, token: accessToken, refreshToken }
     },
-    onSuccess: ({ user, token }) => {
-      setAuth(user, token)
+    onSuccess: ({ user, token, refreshToken }) => {
+      setAuth(user, token, refreshToken)
       router.push('/')
     },
   })
@@ -92,12 +94,12 @@ const useAuth = () => {
   const registerMutation = useMutation({
     mutationFn: async (payload: RegisterPayload) => {
       const authRes = await apiClient.post<AuthResponse>('/auth/register', payload)
-      const token = authRes.data.accessToken
-      const user = await fetchCurrentUser(token)
-      return { user, token }
+      const { accessToken, refreshToken } = authRes.data
+      const user = await fetchCurrentUser(accessToken)
+      return { user, token: accessToken, refreshToken }
     },
-    onSuccess: ({ user, token }) => {
-      setAuth(user, token)
+    onSuccess: ({ user, token, refreshToken }) => {
+      setAuth(user, token, refreshToken)
       router.push('/')
     },
   })
@@ -107,7 +109,7 @@ const useAuth = () => {
       try {
         await apiClient.post('/auth/logout')
       } catch {
-        // ignore
+        // ignore - clear local state regardless
       }
     },
     onSettled: () => {

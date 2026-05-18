@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Users, Home, Calendar, Star, Shield, Loader2 } from 'lucide-react'
+import { ArrowLeft, Users, Hop as Home, Calendar, Star, Shield, Loader as Loader2 } from 'lucide-react'
 import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { useListingsInfinite } from '@/hooks/useListings'
@@ -109,7 +109,7 @@ export default function AdminPage() {
                       </td>
                       <td className="px-5 py-3 text-muted-foreground">{listing.city}</td>
                       <td className="px-5 py-3 font-medium">${listing.pricePerNight}</td>
-                      <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{listing.hostId?.split('@')[0] ?? '—'}</td>
+                      <td className="px-5 py-3 text-muted-foreground hidden md:table-cell">{listing.hostEmail?.split('@')[0] ?? '—'}</td>
                     </tr>
                   ))}
                 </tbody>

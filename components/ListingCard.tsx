@@ -7,6 +7,7 @@ import { Heart, Star } from 'lucide-react'
 import { Listing } from '@/types'
 import { useReviewStats } from '@/hooks/useReviews'
 import useWishlistStore from '@/store/wishlistStore'
+import useAuthStore from '@/store/authStore'
 import { cn } from '@/lib/utils'
 
 const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800'
@@ -17,7 +18,10 @@ interface ListingCardProps {
 
 const ListingCard = ({ listing }: ListingCardProps) => {
   const [imgError, setImgError] = useState(false)
-  const { toggle, isWishlisted } = useWishlistStore()
+  const { user } = useAuthStore()
+  const { toggle, isWishlisted, setactiveUser } = useWishlistStore()
+
+  if (user?.id) setactiveUser(user.id)
   const isFavorited = isWishlisted(listing.id)
   const { data: reviewStats } = useReviewStats('LISTING', listing.id)
 
@@ -58,7 +62,7 @@ const ListingCard = ({ listing }: ListingCardProps) => {
             <div className="flex items-center gap-1 flex-shrink-0">
               <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
               <span className="text-sm font-medium">
-                {reviewStats?.count ? reviewStats.averageRating.toFixed(1) : 'New'}
+                {reviewStats?.totalReviews ? reviewStats.averageRating?.toFixed(1) : 'New'}
               </span>
             </div>
           </div>

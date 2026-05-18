@@ -4,7 +4,7 @@ import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { ArrowLeft, Check, Upload, X, Loader2 } from "lucide-react"
+import { ArrowLeft, Check, Upload, X, Loader as Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Header } from "@/components/header"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
-import useListings from "@/hooks/useListings"
+import { useCreateListing } from "@/hooks/useListings"
 import useAuthStore from "@/store/authStore"
 import { useEffect } from "react"
 
@@ -52,7 +52,7 @@ const amenitiesList = [
 export default function NewListingPage() {
   const router = useRouter()
   const { isAuthenticated, user } = useAuthStore()
-  const { createListing, isCreating } = useListings()
+  const { mutateAsync: createListing, isPending: isCreating } = useCreateListing()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [currentStep, setCurrentStep] = useState(1)

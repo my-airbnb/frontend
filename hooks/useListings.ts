@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/react-query'
 import apiClient from '@/lib/axios'
 import { Listing, ListingFilters, CreateListingPayload } from '@/types'
+import { normalizeListingsResponse } from '@/lib/api-utils'
 
 export interface ListingsPage {
   content: Listing[]
@@ -12,30 +13,42 @@ export interface ListingsPage {
 
 type ListingsResponse = ListingsPage
 
-const useListings = (filters?: ListingFilters) => {
-  const queryClient = useQueryClient()
+export function buildListingParams(filters?: ListingFilters): URLSearchParams {
+  const params = new URLSearchParams()
+  if (filters?.city) params.append('city', filters.city)
+  if (filters?.minPrice !== undefined) params.append('minPrice', String(filters.minPrice))
+  if (filters?.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice))
+  if (filters?.checkIn) params.append('checkIn', filters.checkIn)
+  if (filters?.checkOut) params.append('checkOut', filters.checkOut)
+  if (filters?.guests) params.append('guests', String(filters.guests))
+  if (filters?.type) params.append('type', filters.type)
+  return params
+}
 
+const useListings = (filters?: ListingFilters) => {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ['listings', filters],
-    queryFn: async () => {
-      const params = new URLSearchParams()
-      if (filters?.city) params.append('city', filters.city)
-      if (filters?.minPrice !== undefined) params.append('minPrice', String(filters.minPrice))
-      if (filters?.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice))
-      if (filters?.checkIn) params.append('checkIn', filters.checkIn)
-      if (filters?.checkOut) params.append('checkOut', filters.checkOut)
-      if (filters?.guests) params.append('guests', String(filters.guests))
-      if (filters?.type) params.append('type', filters.type)
-
+    queryFn: async ({ signal }) => {
+      const params = buildListingParams(filters)
       const response = await apiClient.get<ListingsResponse | Listing[]>(
-        `/listings?${params.toString()}`
+        `/listings?${params.toString()}`,
+        { signal }
       )
-      if (Array.isArray(response.data)) return response.data
-      return (response.data as ListingsResponse).content || []
+      return normalizeListingsResponse(response.data)
     },
   })
 
-  const createListingMutation = useMutation({
+  return {
+    listings: data || [],
+    isLoading,
+    error,
+    refetch,
+  }
+}
+
+export const useCreateListing = () => {
+  const queryClient = useQueryClient()
+  return useMutation({
     mutationFn: async (payload: CreateListingPayload): Promise<Listing> => {
       const response = await apiClient.post<Listing>('/listings', payload)
       return response.data
@@ -45,23 +58,13 @@ const useListings = (filters?: ListingFilters) => {
       queryClient.invalidateQueries({ queryKey: ['host-listings'] })
     },
   })
-
-  return {
-    listings: data || [],
-    isLoading,
-    error,
-    refetch,
-    createListing: createListingMutation.mutateAsync,
-    isCreating: createListingMutation.isPending,
-    createError: createListingMutation.error,
-  }
 }
 
 export const useListing = (id: string) => {
   return useQuery({
     queryKey: ['listing', id],
-    queryFn: async () => {
-      const response = await apiClient.get<Listing>(`/listings/${id}`)
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<Listing>(`/listings/${id}`, { signal })
       return response.data
     },
     enabled: !!id,
@@ -71,10 +74,9 @@ export const useListing = (id: string) => {
 export const useHostListings = () => {
   return useQuery({
     queryKey: ['host-listings'],
-    queryFn: async () => {
-      const response = await apiClient.get<Listing[] | ListingsResponse>('/listings/host/me')
-      if (Array.isArray(response.data)) return response.data
-      return (response.data as ListingsResponse).content || []
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<Listing[] | ListingsResponse>('/listings/host/me', { signal })
+      return normalizeListingsResponse(response.data)
     },
   })
 }
@@ -82,8 +84,8 @@ export const useHostListings = () => {
 export const useListingSearch = (query: string, enabled = true) => {
   return useQuery({
     queryKey: ['listing-search', query],
-    queryFn: async () => {
-      const response = await apiClient.get<Listing[]>(`/listings/search?query=${encodeURIComponent(query)}`)
+    queryFn: async ({ signal }) => {
+      const response = await apiClient.get<Listing[]>(`/listings/search?query=${encodeURIComponent(query)}`, { signal })
       return response.data || []
     },
     enabled: enabled && !!query && query.length > 1,
@@ -94,18 +96,11 @@ export const useListingSearch = (query: string, enabled = true) => {
 export const useListingsInfinite = (filters?: ListingFilters) => {
   return useInfiniteQuery<ListingsPage>({
     queryKey: ['listings-infinite', filters],
-    queryFn: async ({ pageParam }) => {
-      const params = new URLSearchParams()
-      if (filters?.city) params.append('city', filters.city)
-      if (filters?.minPrice !== undefined) params.append('minPrice', String(filters.minPrice))
-      if (filters?.maxPrice !== undefined) params.append('maxPrice', String(filters.maxPrice))
-      if (filters?.checkIn) params.append('checkIn', filters.checkIn)
-      if (filters?.checkOut) params.append('checkOut', filters.checkOut)
-      if (filters?.guests) params.append('guests', String(filters.guests))
-      if (filters?.type) params.append('type', filters.type)
+    queryFn: async ({ pageParam, signal }) => {
+      const params = buildListingParams(filters)
       params.append('page', String(pageParam ?? 0))
       params.append('size', '12')
-      const response = await apiClient.get<ListingsPage | Listing[]>(`/listings?${params.toString()}`)
+      const response = await apiClient.get<ListingsPage | Listing[]>(`/listings?${params.toString()}`, { signal })
       if (Array.isArray(response.data)) {
         const arr = response.data as Listing[]
         return { content: arr, totalElements: arr.length, totalPages: 1, number: 0, size: arr.length }

@@ -4,10 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useState, useCallback, useEffect } from 'react'
-import {
-  MapPin, Users, Star, ArrowLeft, CheckCircle, ChevronLeft, ChevronRight, X, LayoutGrid,
-  Bed, Bath, Loader2
-} from 'lucide-react'
+import { MapPin, Users, Star, ArrowLeft, CircleCheck as CheckCircle, ChevronLeft, ChevronRight, X, LayoutGrid, Bed, Bath, Loader as Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
@@ -22,6 +19,7 @@ import { useRouter } from 'next/navigation'
 import useAuthStore from '@/store/authStore'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { stripHtml } from '@/lib/api-utils'
 
 const ListingMap = dynamic(() => import('@/components/ListingMap'), { ssr: false })
 
@@ -46,7 +44,7 @@ export default function ListingDetailClient({ id }: Props) {
   const { data: myBookings } = useBookings()
   const { mutateAsync: createReview, isPending: submittingReview } = useCreateReview()
   const { mutateAsync: sendMessage, isPending: startingChat } = useSendMessage()
-  const { data: hostUser } = useGetUserByEmail(listing?.hostId ?? '')
+  const { data: hostUser, isLoading: hostLoading } = useGetUserByEmail(listing?.hostEmail ?? '')
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [mobilePhotoIndex, setMobilePhotoIndex] = useState(0)
@@ -55,7 +53,7 @@ export default function ListingDetailClient({ id }: Props) {
   const [reviewSubmitted, setReviewSubmitted] = useState(false)
 
   const completedBooking = myBookings?.find((b) => b.listingId === id && b.status === 'COMPLETED')
-  const alreadyReviewed = reviews?.some((r) => r.reviewerId === user?.email)
+  const alreadyReviewed = reviews?.some((r) => r.reviewerId === user?.id)
 
   const openLightbox = useCallback((index: number) => { setLightboxIndex(index); setLightboxOpen(true) }, [])
   const closeLightbox = useCallback(() => setLightboxOpen(false), [])
@@ -73,6 +71,7 @@ export default function ListingDetailClient({ id }: Props) {
     if (!completedBooking) return
     try {
       await createReview({ bookingId: completedBooking.id, listingId: id, revieweeId: listing?.hostId, ratingOverall: reviewRating, comment: reviewComment })
+
       setReviewSubmitted(true)
       toast.success('Review submitted!')
     } catch {
@@ -83,9 +82,13 @@ export default function ListingDetailClient({ id }: Props) {
   const handleContactHost = async () => {
     if (!listing) return
     try {
-      const res = await sendMessage({ recipientEmail: listing.hostId, listingId: listing.id, content: `Hi! I'm interested in ${listing.title}.` })
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      router.push(`/messages/${(res as any).conversationId}`)
+      const res = await sendMessage({ recipientEmail: listing.hostEmail, listingId: listing.id, content: `Hi! I'm interested in ${listing.title}.` })
+      const conversationId = (res as unknown as Record<string, unknown>).conversationId as string | undefined
+      if (conversationId) {
+        router.push(`/messages/${conversationId}`)
+      } else {
+        toast.error('Could not start conversation.')
+      }
     } catch { toast.error('Failed to start conversation.') }
   }
 
@@ -220,7 +223,14 @@ export default function ListingDetailClient({ id }: Props) {
           <div className="flex items-center justify-between pb-6 border-b border-border">
             <div>
               <h2 className="text-xl font-semibold capitalize">
-                {listing.type} hosted by {hostUser ? `${hostUser.firstName} ${hostUser.lastName}` : 'a local host'}
+                {listing.type} hosted by{' '}
+                {hostLoading ? (
+                  <span className="inline-block w-32 h-6 bg-muted rounded animate-pulse align-middle" />
+                ) : hostUser ? (
+                  `${hostUser.firstName} ${hostUser.lastName}`
+                ) : (
+                  'a local host'
+                )}
               </h2>
               <div className="flex flex-wrap items-center gap-3 mt-2 text-sm text-muted-foreground">
                 <span className="flex items-center gap-1"><Users className="h-4 w-4" />{listing.maxGuests} guests</span>
@@ -233,7 +243,7 @@ export default function ListingDetailClient({ id }: Props) {
               <Avatar className="h-14 w-14">
                 <AvatarImage src={hostUser?.avatarUrl} />
                 <AvatarFallback className="text-xl font-bold">
-                  {hostUser ? hostUser.firstName?.[0] : 'H'}
+                  {hostLoading ? <Loader2 className="h-6 w-6 animate-spin" /> : hostUser ? hostUser.firstName?.[0] : 'H'}
                 </AvatarFallback>
               </Avatar>
               <button onClick={handleContactHost} disabled={startingChat} className="text-xs text-primary font-medium hover:underline disabled:opacity-50">
@@ -244,13 +254,6 @@ export default function ListingDetailClient({ id }: Props) {
 
           {/* Highlights */}
           <div className="space-y-4 pb-6 border-b border-border">
-            <div className="flex items-start gap-4">
-              <span className="text-2xl">✨</span>
-              <div>
-                <p className="font-medium">Superhost</p>
-                <p className="text-sm text-muted-foreground">Superhosts are experienced, highly rated hosts.</p>
-              </div>
-            </div>
             {listing.instantBook && (
               <div className="flex items-start gap-4">
                 <span className="text-2xl">⚡</span>
@@ -260,20 +263,22 @@ export default function ListingDetailClient({ id }: Props) {
                 </div>
               </div>
             )}
-            <div className="flex items-start gap-4">
-              <span className="text-2xl">🔑</span>
-              <div>
-                <p className="font-medium">Self check-in</p>
-                <p className="text-sm text-muted-foreground">Check yourself in with the lockbox.</p>
+            {listing.amenities?.some((a) => a.toLowerCase() === 'self_check_in') && (
+              <div className="flex items-start gap-4">
+                <span className="text-2xl">🔑</span>
+                <div>
+                  <p className="font-medium">Self check-in</p>
+                  <p className="text-sm text-muted-foreground">Check yourself in with the lockbox.</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Description */}
           <div className="pb-6 border-b border-border">
             <h3 className="text-xl font-semibold mb-4">About this place</h3>
             <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-              {listing.description.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '')}
+              {stripHtml(listing.description)}
             </p>
           </div>
 

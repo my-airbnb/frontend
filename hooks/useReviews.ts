@@ -1,12 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/axios'
-import { Review, CreateReviewPayload } from '@/types'
+import { Review, CreateReviewPayload, ReviewStats } from '@/types'
 
 export const useListingReviews = (listingId: string) => {
   return useQuery({
     queryKey: ['reviews', 'listing', listingId],
-    queryFn: async (): Promise<Review[]> => {
-      const response = await apiClient.get<Review[]>(`/reviews/listing/${listingId}`)
+    queryFn: async ({ signal }): Promise<Review[]> => {
+      const response = await apiClient.get<Review[]>(`/reviews/listing/${listingId}`, { signal })
       return Array.isArray(response.data) ? response.data : []
     },
     enabled: !!listingId,
@@ -27,16 +27,16 @@ export const useCreateReview = () => {
   })
 }
 
-export const useReviewStats = (_targetType: 'LISTING' | 'EXPERIENCE', targetId: string) => {
+export const useReviewStats = (targetType: 'LISTING' | 'EXPERIENCE', targetId: string) => {
+  const basePath = targetType === 'LISTING' ? 'listing' : 'experience'
   return useQuery({
-    queryKey: ['review-stats', _targetType, targetId],
-    queryFn: async () => {
-      const response = await apiClient.get<{ averageRating: number; count: number; listingId: string }>(
-        `/reviews/listing/${targetId}/stats`
+    queryKey: ['review-stats', targetType, targetId],
+    queryFn: async ({ signal }): Promise<ReviewStats> => {
+      const response = await apiClient.get<ReviewStats>(
+        `/reviews/${basePath}/${targetId}/stats`,
+        { signal }
       )
-      const data = response.data
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { averageRating: data.averageRating ?? 0, count: (data as any).totalReviews ?? 0 }
+      return response.data
     },
     enabled: !!targetId,
     staleTime: 5 * 60 * 1000,

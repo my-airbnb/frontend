@@ -22,8 +22,8 @@ export const useConfirmPayment = () => {
 export const useGetPayment = (bookingId: string) => {
   return useQuery({
     queryKey: ['payments', bookingId],
-    queryFn: async (): Promise<PaymentIntentResponse> => {
-      const response = await apiClient.get<PaymentIntentResponse>(`/payments/${bookingId}`)
+    queryFn: async ({ signal }): Promise<PaymentIntentResponse> => {
+      const response = await apiClient.get<PaymentIntentResponse>(`/payments/${bookingId}`, { signal })
       return response.data
     },
     enabled: !!bookingId,

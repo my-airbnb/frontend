@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { differenceInCalendarDays, format } from 'date-fns'
-import { Star, Loader2 } from 'lucide-react'
+import { Star, Loader as Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
@@ -15,6 +15,7 @@ import { Listing } from '@/types'
 import { useRouter } from 'next/navigation'
 import type { DateRange } from 'react-day-picker'
 import { cn } from '@/lib/utils'
+import { getApiErrorMessage } from '@/lib/api-utils'
 
 interface BookingWidgetProps {
   listing: Listing
@@ -27,7 +28,6 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
   const { isAuthenticated } = useAuthStore()
   const { mutateAsync: createBooking, isPending } = useCreateBooking()
   const { data: blockedRanges = [] } = useBlockedDates(listing.id)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { data: reviewStats } = useReviewStats('LISTING', listing.id)
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
@@ -41,18 +41,18 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
   const serviceFee = Math.round(subtotal * SERVICE_FEE_RATE)
   const total = subtotal + serviceFee
 
-  const blockedDates = useMemo(() => {
-    const dates: Date[] = []
+  const blockedDateStrings = useMemo(() => {
+    const dateSet = new Set<string>()
     blockedRanges.forEach(({ checkIn, checkOut }) => {
       const start = new Date(checkIn)
       const end = new Date(checkOut)
       const current = new Date(start)
       while (current <= end) {
-        dates.push(new Date(current))
+        dateSet.add(current.toDateString())
         current.setDate(current.getDate() + 1)
       }
     })
-    return dates
+    return dateSet
   }, [blockedRanges])
 
   const handleReserve = async (e: React.FormEvent) => {
@@ -74,8 +74,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
       })
       router.push(`/checkout/${booking.id}`)
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to create booking.'
-      toast.error(message)
+      toast.error(getApiErrorMessage(err, 'Failed to create booking.'))
     }
   }
 
@@ -89,7 +88,6 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
         <div className="flex items-center gap-1 text-sm">
           <Star className="h-4 w-4 fill-foreground text-foreground" />
           <span className="font-medium">
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             {reviewStats && reviewStats.totalReviews > 0 && reviewStats.averageRating != null ? reviewStats.averageRating.toFixed(1) : 'New'}
           </span>
         </div>
@@ -116,7 +114,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
               mode="range"
               selected={dateRange}
               onSelect={setDateRange}
-              disabled={(date) => date < new Date() || blockedDates.some((d) => d.toDateString() === date.toDateString())}
+              disabled={(date) => date < new Date() || blockedDateStrings.has(date.toDateString())}
               numberOfMonths={1}
             />
           </PopoverContent>

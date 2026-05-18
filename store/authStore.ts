@@ -5,9 +5,17 @@ import { User } from '@/types'
 interface AuthState {
   user: User | null
   token: string | null
+  refreshToken: string | null
   isAuthenticated: boolean
-  setAuth: (user: User, token: string) => void
+  setAuth: (user: User, token: string, refreshToken?: string) => void
   clearAuth: () => void
+}
+
+const AUTH_STORAGE_KEYS = ['auth-storage']
+
+function clearAuthStorage() {
+  if (typeof window === 'undefined') return
+  AUTH_STORAGE_KEYS.forEach((key) => localStorage.removeItem(key))
 }
 
 const useAuthStore = create<AuthState>()(
@@ -15,20 +23,16 @@ const useAuthStore = create<AuthState>()(
     (set) => ({
       user: null,
       token: null,
+      refreshToken: null,
       isAuthenticated: false,
 
-      setAuth: (user: User, token: string) => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('token', token)
-        }
-        set({ user, token, isAuthenticated: true })
+      setAuth: (user: User, token: string, refreshToken?: string) => {
+        set({ user, token, refreshToken: refreshToken ?? null, isAuthenticated: true })
       },
 
       clearAuth: () => {
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('token')
-        }
-        set({ user: null, token: null, isAuthenticated: false })
+        set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
+        clearAuthStorage()
       },
     }),
     {
@@ -39,6 +43,7 @@ const useAuthStore = create<AuthState>()(
       partialize: (state) => ({
         user: state.user,
         token: state.token,
+        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }
