@@ -8,19 +8,23 @@ import ListingCard from "@/components/ListingCard"
 import { useListingsInfinite } from "@/hooks/useListings"
 import { ListingFilters } from "@/types"
 
-export function PropertyGrid() {
+interface PropertyGridProps {
+  city?: string
+}
+
+export function PropertyGrid({ city: cityProp }: PropertyGridProps = {}) {
   const searchParams = useSearchParams()
   const scrollRef = useRef<HTMLDivElement>(null)
 
   const filters: ListingFilters = useMemo(() => ({
-    city: searchParams.get('city') || undefined,
+    city: cityProp ?? searchParams.get('city') ?? undefined,
     minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : undefined,
     maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined,
     checkIn: searchParams.get('checkIn') || undefined,
     checkOut: searchParams.get('checkOut') || undefined,
     guests: searchParams.get('guests') ? Number(searchParams.get('guests')) : undefined,
     type: searchParams.get('type') || undefined,
-  }), [searchParams])
+  }), [cityProp, searchParams])
 
   const {
     data,

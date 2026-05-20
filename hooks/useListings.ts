@@ -127,6 +127,17 @@ export const useUpdateListing = () => {
   })
 }
 
+export const useDistinctCities = () => {
+  return useQuery({
+    queryKey: ['distinct-cities'],
+    queryFn: async ({ signal }): Promise<string[]> => {
+      const res = await apiClient.get<string[]>('/listings/cities', { signal })
+      return res.data
+    },
+    staleTime: 10 * 60 * 1000,
+  })
+}
+
 export const useDeleteListing = () => {
   const queryClient = useQueryClient()
   return useMutation({
