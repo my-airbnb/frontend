@@ -33,46 +33,45 @@ const ListingCard = ({ listing }: ListingCardProps) => {
   return (
     <Link href={`/listings/${listing.id}`} className="group block">
       <div className="relative">
-        <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-muted">
+        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-muted">
           <Image
             src={photoUrl}
             alt={listing.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="220px"
             onError={() => setImgError(true)}
           />
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(listing.id) }}
-            className="absolute top-3 right-3 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
+            className="absolute top-2 right-2 z-10 p-1.5 rounded-full bg-card/80 backdrop-blur-sm hover:bg-card transition-colors"
             aria-label={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
           >
-            <Heart className={cn('h-4 w-4', isFavorited ? 'fill-destructive text-destructive' : 'text-foreground')} />
+            <Heart className={cn('h-3.5 w-3.5', isFavorited ? 'fill-destructive text-destructive' : 'text-foreground')} />
           </button>
           {listing.instantBook && (
-            <span className="absolute top-3 left-3 bg-card text-xs font-semibold px-2 py-1 rounded-full shadow">
+            <span className="absolute top-2 left-2 bg-card/90 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow">
               Instant Book
             </span>
           )}
         </div>
 
-        <div className="mt-3">
-          <div className="flex justify-between items-start gap-2">
-            <h3 className="font-semibold text-foreground truncate flex-1">
-              {listing.city}, {listing.country}
+        <div className="mt-2">
+          <div className="flex justify-between items-start gap-1">
+            <h3 className="text-sm font-semibold text-foreground truncate flex-1 leading-tight">
+              {listing.type} in {listing.city}
             </h3>
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <Star className="h-3.5 w-3.5 fill-foreground text-foreground" />
-              <span className="text-sm font-medium">
-                {reviewStats?.totalReviews ? reviewStats.averageRating?.toFixed(1) : 'New'}
+            <div className="flex items-center gap-0.5 flex-shrink-0">
+              <Star className="h-3 w-3 fill-foreground text-foreground" />
+              <span className="text-xs font-medium">
+                {reviewStats?.totalReviews ? reviewStats.averageRating?.toFixed(2) : 'New'}
               </span>
             </div>
           </div>
-          <p className="text-sm text-muted-foreground mt-0.5 truncate">{listing.title}</p>
-          <p className="text-sm text-muted-foreground capitalize">{listing.type}</p>
-          <p className="mt-1.5 text-sm font-semibold text-foreground">
-            <span className="text-base">${listing.pricePerNight}</span>
-            <span className="font-normal text-muted-foreground"> / night</span>
+          <p className="text-xs text-muted-foreground mt-0.5 truncate">{listing.title}</p>
+          <p className="mt-1 text-sm font-semibold text-foreground">
+            ${listing.pricePerNight}
+            <span className="font-normal text-muted-foreground text-xs"> / night</span>
           </p>
         </div>
       </div>
