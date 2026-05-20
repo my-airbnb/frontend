@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useRef } from "react"
+import { useMemo, useRef, useEffect, useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
@@ -10,11 +10,15 @@ import { ListingFilters } from "@/types"
 
 interface PropertyGridProps {
   city?: string
+  title?: string
+  layout?: 'horizontal' | 'vertical'
 }
 
-export function PropertyGrid({ city: cityProp }: PropertyGridProps = {}) {
+export function PropertyGrid({ city: cityProp, title, layout = 'horizontal' }: PropertyGridProps = {}) {
   const searchParams = useSearchParams()
   const scrollRef = useRef<HTMLDivElement>(null)
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([])
+  const [prioritySet, setPrioritySet] = useState<Set<number>>(new Set([0, 1, 2]))
 
   const filters: ListingFilters = useMemo(() => ({
     city: cityProp ?? searchParams.get('city') ?? undefined,
@@ -39,18 +43,59 @@ export function PropertyGrid({ city: cityProp }: PropertyGridProps = {}) {
   const listings = data?.pages.flatMap((p) => p.content) ?? []
   const totalElements = data?.pages[0]?.totalElements ?? 0
 
+  // Dynamic image priority: observe which cards are visible in the horizontal scroll container
+  useEffect(() => {
+    if (layout !== 'horizontal') return
+    const scrollEl = scrollRef.current
+    if (!scrollEl || listings.length === 0) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        setPrioritySet(prev => {
+          const next = new Set(prev)
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              const idx = Number((entry.target as HTMLElement).dataset.idx)
+              if (!isNaN(idx)) {
+                next.add(idx)
+                next.add(idx + 1)
+                next.add(idx + 2)
+              }
+            }
+          })
+          return next
+        })
+      },
+      { root: scrollEl, rootMargin: '0px 400px 0px 0px', threshold: 0 }
+    )
+
+    cardRefs.current.forEach(el => { if (el) observer.observe(el) })
+    return () => observer.disconnect()
+  }, [listings.length, layout])
+
   const scroll = (dir: 'left' | 'right') => {
     scrollRef.current?.scrollBy({ left: dir === 'left' ? -720 : 720, behavior: 'smooth' })
   }
+
+  const heading = title ?? (
+    filters.city
+      ? `Places in ${filters.city} →`
+      : layout === 'vertical'
+        ? 'Search results'
+        : 'Top picks for you →'
+  )
 
   if (isLoading) {
     return (
       <section className="py-8">
         <div className="container mx-auto px-4 lg:px-8">
           <div className="h-6 w-48 rounded bg-muted animate-pulse mb-5" />
-          <div className="flex gap-4 overflow-hidden">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <div key={i} className="flex-none w-48 animate-pulse">
+          <div className={layout === 'horizontal'
+            ? "flex gap-4 overflow-hidden"
+            : "grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4"
+          }>
+            {Array.from({ length: layout === 'horizontal' ? 7 : 10 }).map((_, i) => (
+              <div key={i} className={layout === 'horizontal' ? "flex-none w-48 animate-pulse" : "animate-pulse"}>
                 <div className="aspect-[4/3] rounded-2xl bg-muted" />
                 <div className="mt-2 space-y-1.5">
                   <div className="h-3 w-3/4 rounded bg-muted" />
@@ -87,14 +132,43 @@ export function PropertyGrid({ city: cityProp }: PropertyGridProps = {}) {
     )
   }
 
+  if (layout === 'vertical') {
+    return (
+      <section className="py-8">
+        <div className="container mx-auto px-4 lg:px-8">
+          <div className="mb-6">
+            <h2 className="text-xl font-semibold">{heading}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{totalElements} places found</p>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            {listings.map((listing, index) => (
+              <ListingCard key={listing.id} listing={listing} priority={index < 6} />
+            ))}
+          </div>
+          {hasNextPage && (
+            <div className="mt-8 flex justify-center">
+              <Button
+                variant="outline"
+                className="rounded-full px-8"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage
+                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading…</>
+                  : 'Show more'}
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
   return (
     <section className="py-8">
       <div className="container mx-auto px-4 lg:px-8">
-        {/* Header row */}
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">
-            {filters.city ? `Places in ${filters.city} →` : 'Popular places to stay →'}
-          </h2>
+          <h2 className="text-xl font-semibold">{heading}</h2>
           <div className="flex items-center gap-2">
             {totalElements > 0 && (
               <span className="text-sm text-muted-foreground mr-2">
@@ -103,7 +177,7 @@ export function PropertyGrid({ city: cityProp }: PropertyGridProps = {}) {
             )}
             <button
               onClick={() => scroll('left')}
-              className="h-8 w-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors disabled:opacity-30"
+              className="h-8 w-8 rounded-full border border-border flex items-center justify-center hover:bg-muted transition-colors"
               aria-label="Scroll left"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -118,19 +192,22 @@ export function PropertyGrid({ city: cityProp }: PropertyGridProps = {}) {
           </div>
         </div>
 
-        {/* Horizontal scroll row */}
         <div
           ref={scrollRef}
           className="flex gap-3 overflow-x-auto -mx-4 px-4 pb-3 [&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: 'none' }}
         >
           {listings.map((listing, index) => (
-            <div key={listing.id} className="flex-none w-48 sm:w-52">
-              <ListingCard listing={listing} priority={index < 3} />
+            <div
+              key={listing.id}
+              className="flex-none w-48 sm:w-52"
+              ref={(el) => { cardRefs.current[index] = el }}
+              data-idx={index}
+            >
+              <ListingCard listing={listing} priority={prioritySet.has(index)} />
             </div>
           ))}
 
-          {/* Load more sentinel at end of scroll */}
           {hasNextPage && (
             <div className="flex-none flex items-center justify-center px-4">
               <Button

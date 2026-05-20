@@ -8,12 +8,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import useAuth from '@/hooks/useAuth'
+import useAuth, { useGoogleAuth } from '@/hooks/useAuth'
+import { GoogleLogin } from '@react-oauth/google'
 
 function RegisterForm() {
   const searchParams = useSearchParams()
   const redirect = searchParams.get('redirect') || '/'
   const { register, isRegisterLoading, registerError } = useAuth()
+  const googleAuth = useGoogleAuth()
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
@@ -185,6 +187,31 @@ function RegisterForm() {
                 )}
               </Button>
             </form>
+
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-border" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">Or sign up with</span>
+                </div>
+              </div>
+              <div className="mt-4 flex justify-center">
+                <GoogleLogin
+                  onSuccess={(res) => {
+                    if (res.credential) googleAuth.mutate({ credential: res.credential, redirectTo: redirect })
+                  }}
+                  onError={() => {}}
+                  theme="outline"
+                  size="large"
+                  width="360"
+                />
+              </div>
+              {googleAuth.isError && (
+                <p className="mt-2 text-center text-sm text-destructive">Google sign-up failed. Please try again.</p>
+              )}
+            </div>
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{' '}

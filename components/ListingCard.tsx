@@ -1,8 +1,8 @@
 'use client'
 
+import React, { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useEffect } from 'react'
 import { Heart, Star } from 'lucide-react'
 import { Listing } from '@/types'
 import { useReviewStats } from '@/hooks/useReviews'
@@ -18,7 +18,7 @@ interface ListingCardProps {
   priority?: boolean
 }
 
-const ListingCard = ({ listing, priority = false }: ListingCardProps) => {
+const ListingCard = React.memo(function ListingCard({ listing, priority = false }: ListingCardProps) {
   const [imgError, setImgError] = useState(false)
   const { user } = useAuthStore()
   const { toggle, isWishlisted, setactiveUser } = useWishlistStore()
@@ -26,6 +26,7 @@ const ListingCard = ({ listing, priority = false }: ListingCardProps) => {
   useEffect(() => {
     if (user?.id) setactiveUser(user.id)
   }, [user?.id, setactiveUser])
+
   const isFavorited = isWishlisted(listing.id)
   const { data: reviewStats } = useReviewStats('LISTING', listing.id)
 
@@ -82,6 +83,6 @@ const ListingCard = ({ listing, priority = false }: ListingCardProps) => {
       </div>
     </Link>
   )
-}
+}, (prev, next) => prev.listing.id === next.listing.id && prev.priority === next.priority)
 
 export default ListingCard

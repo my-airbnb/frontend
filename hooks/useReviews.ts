@@ -40,5 +40,6 @@ export const useReviewStats = (targetType: 'LISTING' | 'EXPERIENCE', targetId: s
     },
     enabled: !!targetId,
     staleTime: 5 * 60 * 1000,
+    gcTime: 30 * 60 * 1000,
   })
 }

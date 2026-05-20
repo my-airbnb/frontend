@@ -74,6 +74,24 @@ const fetchCurrentUser = async (token: string): Promise<User> => {
   return response.data
 }
 
+export const useGoogleAuth = () => {
+  const router = useRouter()
+  const { setAuth } = useAuthStore()
+
+  return useMutation({
+    mutationFn: async ({ credential, redirectTo }: { credential: string; redirectTo: string }) => {
+      const authRes = await apiClient.post<AuthResponse>('/auth/google', { credential })
+      const { accessToken, refreshToken } = authRes.data
+      const user = await fetchCurrentUser(accessToken)
+      return { user, token: accessToken, refreshToken, redirectTo }
+    },
+    onSuccess: ({ user, token, refreshToken, redirectTo }) => {
+      setAuth(user, token, refreshToken)
+      router.push(redirectTo)
+    },
+  })
+}
+
 const useAuth = () => {
   const router = useRouter()
   const { setAuth, clearAuth } = useAuthStore()

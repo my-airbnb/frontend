@@ -4,7 +4,6 @@ import { useMemo } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { PropertyGrid } from './property-grid'
 import { useDistinctCities } from '@/hooks/useListings'
-import { Loader2 } from 'lucide-react'
 
 function CityRowSkeleton() {
   return (
@@ -31,6 +30,7 @@ function CityRowSkeleton() {
 export function HomeListings() {
   const searchParams = useSearchParams()
   const searchCity = searchParams.get('city')
+  const hasAnySearch = searchCity || searchParams.get('type') || searchParams.get('checkIn')
 
   const { data: allCities, isLoading } = useDistinctCities()
 
@@ -40,21 +40,24 @@ export function HomeListings() {
     return shuffled.slice(0, 5)
   }, [allCities])
 
-  // If user searched a city, show just that city row
-  if (searchCity) {
-    return <PropertyGrid />
+  // Search mode: show one vertical results grid
+  if (hasAnySearch) {
+    return <PropertyGrid layout="vertical" />
   }
 
   if (isLoading) {
     return (
       <>
-        {Array.from({ length: 5 }).map((_, i) => <CityRowSkeleton key={i} />)}
+        {Array.from({ length: 6 }).map((_, i) => <CityRowSkeleton key={i} />)}
       </>
     )
   }
 
   return (
     <>
+      {/* Row 1: recommendations (no city filter) */}
+      <PropertyGrid title="Top picks for you →" />
+      {/* Rows 2-6: one random city each */}
       {randomCities.map((city) => (
         <PropertyGrid key={city} city={city} />
       ))}
