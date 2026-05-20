@@ -33,15 +33,49 @@ const processQueue = (error: unknown, token: string | null = null) => {
 }
 
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     if (typeof window !== 'undefined') {
-      const { token, refreshToken } = useAuthStore.getState()
+      const { token, refreshToken, clearAuth } = useAuthStore.getState()
       if (token) {
-        if (isTokenExpired(token) && !refreshToken) {
-          const { clearAuth } = useAuthStore.getState()
-          clearAuth()
-          window.location.href = '/login'
-          return Promise.reject(new Error('Session expired'))
+        if (isTokenExpired(token)) {
+          if (!refreshToken) {
+            clearAuth()
+            window.location.href = '/login'
+            return Promise.reject(new Error('Session expired'))
+          }
+          // Proactively refresh before the request so it succeeds on the first try
+          if (!isRefreshing) {
+            isRefreshing = true
+            try {
+              const res = await axios.post(
+                `${process.env.NEXT_PUBLIC_API_URL || '/api/v1'}/auth/refresh`,
+                { refreshToken }
+              )
+              const { accessToken, refreshToken: newRefreshToken } = res.data
+              const { user } = useAuthStore.getState()
+              if (user) useAuthStore.getState().setAuth(user, accessToken, newRefreshToken)
+              processQueue(null, accessToken)
+              config.headers.Authorization = `Bearer ${accessToken}`
+              return config
+            } catch (err) {
+              processQueue(err, null)
+              clearAuth()
+              window.location.href = '/login'
+              return Promise.reject(err)
+            } finally {
+              isRefreshing = false
+            }
+          } else {
+            return new Promise((resolve, reject) => {
+              failedQueue.push({
+                resolve: (freshToken: string) => {
+                  config.headers.Authorization = `Bearer ${freshToken}`
+                  resolve(config)
+                },
+                reject,
+              })
+            })
+          }
         }
         config.headers.Authorization = `Bearer ${token}`
       }
