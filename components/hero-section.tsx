@@ -1,9 +1,9 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useMemo } from "react"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
-import { Search, CalendarDays, Users } from "lucide-react"
+import { Search, CalendarDays, Users, MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,10 +11,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
 import type { DateRange } from "react-day-picker"
+import { useListingSearch } from "@/hooks/useListings"
 
 export function HeroSection() {
   const router = useRouter()
   const [city, setCity] = useState("")
+  const [debouncedCity, setDebouncedCity] = useState("")
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
   const [guests, setGuests] = useState(1)
   const [openDates, setOpenDates] = useState(false)
@@ -22,6 +25,38 @@ export function HeroSection() {
 
   const checkIn = dateRange?.from
   const checkOut = dateRange?.to
+
+  // Debounce city input by 300 ms
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedCity(city.trim()), 300)
+    return () => clearTimeout(timer)
+  }, [city])
+
+  // Fetch suggestions from Elasticsearch
+  const { data: searchResults, isLoading: isSearching } = useListingSearch(
+    debouncedCity,
+    showSuggestions && debouncedCity.length >= 2
+  )
+
+  // Deduplicate by city+country
+  const citySuggestions = useMemo(() => {
+    if (!searchResults?.length) return []
+    const seen = new Set<string>()
+    return searchResults
+      .filter(({ city: c, country }) => {
+        const key = `${c.toLowerCase()}|${country.toLowerCase()}`
+        if (seen.has(key)) return false
+        seen.add(key)
+        return true
+      })
+      .slice(0, 6)
+      .map(({ city: c, country }) => ({ city: c, country }))
+  }, [searchResults])
+
+  const handleCitySelect = (selected: string) => {
+    setCity(selected)
+    setShowSuggestions(false)
+  }
 
   const handleDateSelect = (range: DateRange | undefined) => {
     setDateRange(range)
@@ -32,6 +67,7 @@ export function HeroSection() {
   }
 
   const handleSearch = () => {
+    setShowSuggestions(false)
     const params = new URLSearchParams()
     if (city.trim()) params.set('city', city.trim())
     if (checkIn) params.set('checkIn', format(checkIn, 'yyyy-MM-dd'))
@@ -40,10 +76,39 @@ export function HeroSection() {
     router.push(`/?${params.toString()}`)
   }
 
+  const suggestionsVisible = showSuggestions && (isSearching || citySuggestions.length > 0)
+
+  const SuggestionsDropdown = () =>
+    suggestionsVisible ? (
+      <div className="absolute left-0 right-0 top-full mt-1 z-[500] bg-card border border-border rounded-2xl shadow-2xl overflow-hidden">
+        {isSearching && citySuggestions.length === 0 ? (
+          <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            Searching…
+          </div>
+        ) : null}
+        {citySuggestions.map(({ city: c, country }) => (
+          <button
+            key={`${c}|${country}`}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm hover:bg-muted transition-colors text-left group"
+            onMouseDown={(e) => { e.preventDefault(); handleCitySelect(c) }}
+          >
+            <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg bg-muted group-hover:bg-background transition-colors">
+              <MapPin className="h-4 w-4 text-primary" />
+            </div>
+            <div>
+              <span className="font-semibold">{c}</span>
+              <span className="text-muted-foreground">, {country}</span>
+            </div>
+          </button>
+        ))}
+      </div>
+    ) : null
+
   return (
-    <section className="relative w-full overflow-hidden">
-      {/* Background Image */}
-      <div className="relative h-[550px] sm:h-[550px] lg:h-[600px]">
+    <section className="relative w-full">
+      {/* Background Image — overflow-hidden kept here so dropdown can escape */}
+      <div className="relative h-[550px] sm:h-[550px] lg:h-[600px] overflow-hidden">
         <Image
           src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
           alt="Beautiful vacation destination"
@@ -55,7 +120,7 @@ export function HeroSection() {
         <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
       </div>
 
-      {/* Content */}
+      {/* Content — positioned over the image */}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
         <h1 className="mb-4 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-6xl">
           <span className="text-balance">Find your next</span>
@@ -68,16 +133,27 @@ export function HeroSection() {
 
         {/* Search Form */}
         <div className="w-full max-w-4xl rounded-2xl bg-card p-3 shadow-2xl sm:p-4">
-          {/* Mobile & Tablet Layout */}
+
+          {/* ── Mobile & Tablet Layout ── */}
           <div className="flex flex-col gap-3 lg:hidden">
-            <div className="rounded-xl bg-secondary/50 px-4 py-3">
-              <Label className="text-xs font-semibold text-foreground">Where</Label>
-              <Input
-                placeholder="Search destinations"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className="h-auto border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
-              />
+            {/* Where — with autocomplete */}
+            <div className="relative">
+              <div className="rounded-xl bg-secondary/50 px-4 py-3">
+                <Label className="text-xs font-semibold text-foreground">Where</Label>
+                <Input
+                  placeholder="Search destinations"
+                  value={city}
+                  onChange={(e) => { setCity(e.target.value); setShowSuggestions(true) }}
+                  onFocus={() => city.length >= 2 && setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSearch()
+                    if (e.key === 'Escape') setShowSuggestions(false)
+                  }}
+                  className="h-auto border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
+                />
+              </div>
+              <SuggestionsDropdown />
             </div>
 
             <Popover open={openMobileDates} onOpenChange={setOpenMobileDates}>
@@ -146,17 +222,26 @@ export function HeroSection() {
             </Button>
           </div>
 
-          {/* Desktop Layout */}
+          {/* ── Desktop Layout ── */}
           <div className="hidden lg:flex lg:items-center lg:gap-1">
-            <div className="flex-1 rounded-xl px-4 py-3 hover:bg-secondary/50">
-              <Label className="text-xs font-semibold text-foreground">Where</Label>
-              <Input
-                placeholder="Search destinations"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                className="h-auto border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
-              />
+            {/* Where — with autocomplete */}
+            <div className="relative flex-1">
+              <div className="rounded-xl px-4 py-3 hover:bg-secondary/50">
+                <Label className="text-xs font-semibold text-foreground">Where</Label>
+                <Input
+                  placeholder="Search destinations"
+                  value={city}
+                  onChange={(e) => { setCity(e.target.value); setShowSuggestions(true) }}
+                  onFocus={() => city.length >= 2 && setShowSuggestions(true)}
+                  onBlur={() => setTimeout(() => setShowSuggestions(false), 150)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') handleSearch()
+                    if (e.key === 'Escape') setShowSuggestions(false)
+                  }}
+                  className="h-auto border-0 bg-transparent p-0 text-sm placeholder:text-muted-foreground focus-visible:ring-0"
+                />
+              </div>
+              <SuggestionsDropdown />
             </div>
 
             <div className="h-10 w-px bg-border" />

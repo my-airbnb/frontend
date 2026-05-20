@@ -1,16 +1,15 @@
 "use client"
 
-import { useCallback, useRef, useEffect, useMemo } from "react"
+import { useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Map, Loader as Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import ListingCard from "@/components/ListingCard"
 import { useListingsInfinite } from "@/hooks/useListings"
 import { ListingFilters } from "@/types"
 
 export function PropertyGrid() {
   const searchParams = useSearchParams()
-  const loadMoreRef = useRef<HTMLDivElement>(null)
 
   const filters: ListingFilters = useMemo(() => ({
     city: searchParams.get('city') || undefined,
@@ -33,25 +32,7 @@ export function PropertyGrid() {
   } = useListingsInfinite(filters)
 
   const listings = data?.pages.flatMap((p) => p.content) ?? []
-
-  const handleLoadMore = useCallback(() => {
-    if (hasNextPage && !isFetchingNextPage) {
-      fetchNextPage()
-    }
-  }, [hasNextPage, isFetchingNextPage, fetchNextPage])
-
-  useEffect(() => {
-    const el = loadMoreRef.current
-    if (!el) return
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) handleLoadMore()
-      },
-      { threshold: 0.1 }
-    )
-    observer.observe(el)
-    return () => observer.disconnect()
-  }, [handleLoadMore])
+  const totalElements = data?.pages[0]?.totalElements ?? 0
 
   if (isLoading) {
     return (
@@ -101,10 +82,15 @@ export function PropertyGrid() {
   return (
     <section className="py-8">
       <div className="container mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-baseline justify-between mb-6">
           <h2 className="text-2xl font-semibold text-foreground">
             {filters.city ? `Places in ${filters.city}` : 'Popular places to stay'}
           </h2>
+          {totalElements > 0 && (
+            <span className="text-sm text-muted-foreground">
+              {listings.length} of {totalElements} places
+            </span>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -113,10 +99,27 @@ export function PropertyGrid() {
           ))}
         </div>
 
-        <div ref={loadMoreRef} className="mt-10 flex justify-center h-16 items-center">
-          {isFetchingNextPage && <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />}
-          {!hasNextPage && listings.length > 0 && (
-            <p className="text-sm text-muted-foreground">You&apos;ve seen all listings</p>
+        {/* Show More / End */}
+        <div className="mt-10 flex flex-col items-center gap-3">
+          {hasNextPage ? (
+            <Button
+              variant="outline"
+              size="lg"
+              className="rounded-full px-10 h-12 font-medium"
+              onClick={() => fetchNextPage()}
+              disabled={isFetchingNextPage}
+            >
+              {isFetchingNextPage ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading…
+                </>
+              ) : (
+                'Show more'
+              )}
+            </Button>
+          ) : (
+            <p className="text-sm text-muted-foreground">You&apos;ve seen all {totalElements} listings</p>
           )}
         </div>
       </div>
