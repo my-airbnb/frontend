@@ -51,7 +51,7 @@ const experiences = [
     id: "3",
     title: "Street Art Walking Tour",
     location: "Brooklyn, New York",
-    image: "https://images.unsplash.com/photo-1569545568164-e4c72e1a0b7e?w=800&q=80",
+    image: "https://images.unsplash.com/photo-1547981609-4b6bfe67ca0b?w=800&q=80",
     price: 35,
     rating: 4.92,
     reviewCount: 312,
@@ -104,6 +104,9 @@ const experiences = [
 export default function ExperiencesPage() {
   const [activeCategory, setActiveCategory] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
+  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
+
+  const PLACEHOLDER = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800&q=80'
 
   const filteredExperiences = experiences.filter((exp) => {
     const matchesCategory = activeCategory === "all" || exp.category === activeCategory
@@ -161,12 +164,13 @@ export default function ExperiencesPage() {
                   <article className="group">
                     <div className="relative aspect-[4/3] overflow-hidden rounded-2xl bg-muted">
                       <Image
-                        src={experience.image}
+                        src={imgErrors[experience.id] ? PLACEHOLDER : experience.image}
                         alt={experience.title}
                         fill
                         className="object-cover"
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                         loading="lazy"
+                        onError={() => setImgErrors((prev) => ({ ...prev, [experience.id]: true }))}
                       />
                       <div className="absolute bottom-3 left-3 rounded-full bg-card/95 px-3 py-1 text-xs font-medium text-foreground backdrop-blur-sm shadow-sm">
                         ${experience.price} / person
