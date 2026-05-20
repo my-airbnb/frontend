@@ -124,9 +124,9 @@ export function PropertyGrid({ city: cityProp }: PropertyGridProps = {}) {
           className="flex gap-3 overflow-x-auto -mx-4 px-4 pb-3 [&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: 'none' }}
         >
-          {listings.map((listing) => (
+          {listings.map((listing, index) => (
             <div key={listing.id} className="flex-none w-48 sm:w-52">
-              <ListingCard listing={listing} />
+              <ListingCard listing={listing} priority={index < 3} />
             </div>
           ))}
 

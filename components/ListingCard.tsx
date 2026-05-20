@@ -10,13 +10,15 @@ import useWishlistStore from '@/store/wishlistStore'
 import useAuthStore from '@/store/authStore'
 import { cn } from '@/lib/utils'
 
-const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=800'
+const PLACEHOLDER_IMAGE = 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400&q=75&auto=format&fit=crop'
+const BLUR_DATA_URL = 'data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw=='
 
 interface ListingCardProps {
   listing: Listing
+  priority?: boolean
 }
 
-const ListingCard = ({ listing }: ListingCardProps) => {
+const ListingCard = ({ listing, priority = false }: ListingCardProps) => {
   const [imgError, setImgError] = useState(false)
   const { user } = useAuthStore()
   const { toggle, isWishlisted, setactiveUser } = useWishlistStore()
@@ -39,7 +41,10 @@ const ListingCard = ({ listing }: ListingCardProps) => {
             alt={listing.title}
             fill
             className="object-cover transition-transform duration-300 group-hover:scale-105"
-            sizes="220px"
+            sizes="(max-width: 640px) 192px, 220px"
+            priority={priority}
+            placeholder="blur"
+            blurDataURL={BLUR_DATA_URL}
             onError={() => setImgError(true)}
           />
           <button

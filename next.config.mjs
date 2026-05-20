@@ -4,7 +4,6 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   images: {
-    unoptimized: true,
     remotePatterns: [
       { protocol: 'https', hostname: 'a0.muscache.com' },
       { protocol: 'https', hostname: 'images.unsplash.com' },
