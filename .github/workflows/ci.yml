@@ -15,6 +15,7 @@ on:
       - 'Dockerfile'
       - 'next.config.mjs'
       - '.github/workflows/ci.yml'
+      - '.dockerignore'
   pull_request:
     branches: [ main, develop ]
     paths:
@@ -29,6 +30,7 @@ on:
       - 'Dockerfile'
       - 'next.config.mjs'
       - '.github/workflows/ci.yml'
+      - '.dockerignore'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
