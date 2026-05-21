@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo } from "react"
-import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { Search, CalendarDays, Users, MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -106,33 +105,11 @@ export function HeroSection() {
     ) : null
 
   return (
-    <section className="relative w-full">
-      {/* Background Image — overflow-hidden kept here so dropdown can escape */}
-      <div className="relative h-[550px] sm:h-[550px] lg:h-[600px] overflow-hidden">
-        <Image
-          src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80"
-          alt="Beautiful vacation destination"
-          fill
-          className="object-cover"
-          priority
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/40 to-black/70" />
-      </div>
-
-      {/* Content — positioned over the image */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
-        <h1 className="mb-4 max-w-3xl text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-6xl">
-          <span className="text-balance">Find your next</span>
-          <br />
-          <span className="text-primary">adventure</span>
-        </h1>
-        <p className="mb-8 max-w-xl text-base text-white/90 sm:text-lg">
-          Discover unique places to stay around the world
-        </p>
+    <section className="w-full border-b border-border bg-background px-4 py-4">
+      <div className="mx-auto max-w-4xl">
 
         {/* Search Form */}
-        <div className="w-full max-w-4xl rounded-2xl bg-card p-3 shadow-2xl sm:p-4">
+        <div className="rounded-2xl border border-border bg-card p-3 shadow-sm sm:p-4">
 
           {/* ── Mobile & Tablet Layout ── */}
           <div className="flex flex-col gap-3 lg:hidden">
