@@ -1,14 +1,10 @@
 # ---- Build Stage ----
 FROM node:20-alpine AS builder
 WORKDIR /app
-
-# Install dependencies first (better caching)
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
-
 COPY . .
 
-# Build-time public env vars
 ARG NEXT_PUBLIC_API_URL=/api/v1
 ARG NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
 ARG NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET
@@ -22,21 +18,18 @@ ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 RUN npm run build
 
-# ---- Run Stage ----
-FROM node:20-alpine
+# ---- Run Stage (standalone — no node_modules needed) ----
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Create non-root user
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/next.config.mjs ./next.config.mjs
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
 
 USER appuser
-
 EXPOSE 3000
-
-CMD ["npm", "start"]
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]
