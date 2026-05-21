@@ -20,8 +20,8 @@ export function MobileNav() {
   const wishlistCount = getItems().length
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-card/95 backdrop-blur-sm border-t border-border safe-area-bottom">
-      <div className="flex items-center justify-around h-16 px-2">
+    <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden bg-card/95 backdrop-blur-sm border border-border shadow-2xl rounded-full">
+      <div className="flex items-center h-14 px-1">
         {navItems.map(({ href, label, icon: Icon, exact }) => {
           const active = exact ? pathname === href : (pathname === href || pathname.startsWith(href + '/'))
           const isWishlist = href === '/wishlists'
@@ -30,7 +30,7 @@ export function MobileNav() {
               key={href}
               href={href}
               className={cn(
-                'flex flex-col items-center justify-center gap-0.5 flex-1 py-2 relative',
+                'flex flex-col items-center justify-center gap-0.5 px-4 py-2 relative',
                 active ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
               )}
             >

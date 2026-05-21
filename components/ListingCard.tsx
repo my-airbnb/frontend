@@ -36,7 +36,7 @@ const ListingCard = React.memo(function ListingCard({ listing, priority = false 
   return (
     <Link href={`/listings/${listing.id}`} className="group block">
       <div className="relative">
-        <div className="relative w-full aspect-[4/3] rounded-xl overflow-hidden bg-muted">
+        <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-muted">
           <Image
             src={photoUrl}
             alt={listing.title}
