@@ -18,7 +18,20 @@ ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 
 RUN npm run build
 
-# ---- Run Stage (standalone — no node_modules needed) ----
+# ---- CI Runtime (uses pre-built standalone from CI runner — no npm in Docker) ----
+FROM node:20-alpine AS ci-runtime
+WORKDIR /app
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+COPY .next/standalone ./
+COPY .next/static ./.next/static
+COPY public ./public
+USER appuser
+EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
+CMD ["node", "server.js"]
+
+# ---- Default Run Stage (used by local docker build) ----
 FROM node:20-alpine AS runner
 WORKDIR /app
 
