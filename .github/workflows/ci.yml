@@ -100,6 +100,7 @@ jobs:
             .next/static
             public
           retention-days: 1
+          include-hidden-files: true
 
   # ---- 3. Docker build (uses pre-built standalone), scan, push ----
   build-scan-push:
