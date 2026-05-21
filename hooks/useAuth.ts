@@ -79,8 +79,8 @@ export const useGoogleAuth = () => {
   const { setAuth } = useAuthStore()
 
   return useMutation({
-    mutationFn: async ({ credential, redirectTo }: { credential: string; redirectTo: string }) => {
-      const authRes = await apiClient.post<AuthResponse>('/auth/google', { credential })
+    mutationFn: async ({ accessToken: googleAccessToken, redirectTo }: { accessToken: string; redirectTo: string }) => {
+      const authRes = await apiClient.post<AuthResponse>('/auth/google', { accessToken: googleAccessToken })
       const { accessToken, refreshToken } = authRes.data
       const user = await fetchCurrentUser(accessToken)
       return { user, token: accessToken, refreshToken, redirectTo }
