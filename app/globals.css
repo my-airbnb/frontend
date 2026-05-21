@@ -151,3 +151,23 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* Leaflet map price pins */
+.map-price-pin {
+  background: #fff;
+  border: 2px solid #222;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  cursor: pointer;
+  transition: transform 0.15s, background 0.15s, color 0.15s;
+}
+.map-price-pin[data-hovered="true"] {
+  background: #222;
+  color: #fff;
+  transform: scale(1.15);
+  z-index: 1000;
+}
