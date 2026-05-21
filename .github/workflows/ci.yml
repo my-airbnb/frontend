@@ -3,12 +3,40 @@ name: CI - frontend
 on:
   push:
     branches: [ main, develop ]
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'hooks/**'
+      - 'lib/**'
+      - 'public/**'
+      - 'types/**'
+      - 'store/**'
+      - 'package*.json'
+      - 'Dockerfile'
+      - 'next.config.mjs'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [ main, develop ]
+    paths:
+      - 'app/**'
+      - 'components/**'
+      - 'hooks/**'
+      - 'lib/**'
+      - 'public/**'
+      - 'types/**'
+      - 'store/**'
+      - 'package*.json'
+      - 'Dockerfile'
+      - 'next.config.mjs'
+      - '.github/workflows/ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
 
-  # ---- 1. SAST with Semgrep ----
+  # ---- 1. SAST + Dependency Scan (parallel) ----
   sast:
     name: SAST - Semgrep
     runs-on: ubuntu-latest
@@ -19,9 +47,8 @@ jobs:
         with:
           config: p/typescript
 
-  # ---- 2. Dependency Scan ----
   dependency-scan:
-    name: SCA - Trivy
+    name: SCA - Trivy (filesystem)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,8 +56,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/trivy
-          key: trivy-db-${{ runner.os }}
-          restore-keys: trivy-db-
+          key: trivy-db-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: trivy-db-${{ runner.os }}-
       - name: Run Trivy on filesystem
         uses: aquasecurity/trivy-action@master
         with:
@@ -40,18 +67,62 @@ jobs:
           exit-code: 1
           cache-dir: ~/.cache/trivy
 
-  # ---- 3. Build, Scan & Push (develop + main only) ----
-  # Merged container-scan + push-to-ghcr to avoid building the Docker image twice.
-  build-scan-push:
-    name: Build, Scan & Push
+  # ---- 2. Type-check + build, upload standalone artifact ----
+  build:
+    name: Type-check & Build
     runs-on: ubuntu-latest
-    needs: [sast, dependency-scan]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+      - name: Type-check
+        run: npx tsc --noEmit
+      - name: Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: /api/v1
+          NEXT_PUBLIC_GOOGLE_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_GOOGLE_CLIENT_ID }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME }}
+          NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET: ${{ secrets.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET }}
+      - name: Upload standalone bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: next-standalone
+          path: |
+            .next/standalone
+            .next/static
+            public
+          retention-days: 1
+
+  # ---- 3. Docker build (uses pre-built standalone), scan, push ----
+  build-scan-push:
+    name: Docker Build, Scan & Push
+    runs-on: ubuntu-latest
+    needs: [sast, dependency-scan, build]
     if: github.ref == 'refs/heads/develop' || github.ref == 'refs/heads/main'
     permissions:
       contents: read
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      - name: Download standalone bundle
+        uses: actions/download-artifact@v4
+        with:
+          name: next-standalone
+          path: ./bundle/
+
+      - name: Reconstruct .next layout for Docker COPY
+        run: |
+          mkdir -p .next/standalone .next/static public
+          cp -r bundle/standalone/. .next/standalone/
+          cp -r bundle/static/. .next/static/
+          cp -r bundle/public/. public/ 2>/dev/null || true
 
       - name: Set image tag
         id: tag
@@ -92,8 +163,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/trivy
-          key: trivy-db-${{ runner.os }}
-          restore-keys: trivy-db-
+          key: trivy-db-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: trivy-db-${{ runner.os }}-
 
       - name: Scan Docker image
         uses: aquasecurity/trivy-action@master
