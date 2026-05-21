@@ -32,6 +32,8 @@ export interface Listing {
   photos: string[]
   active: boolean
   instantBook: boolean
+  avgRating?: number | null
+  reviewCount?: number
   createdAt: string
 }
 

@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /admin
+Disallow: /messages
+Disallow: /checkout/
+
+Sitemap: https://airbb.serghini.me/sitemap.xml

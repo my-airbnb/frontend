@@ -21,6 +21,9 @@ export function HeroSection() {
   const [guests, setGuests] = useState(1)
   const [openDates, setOpenDates] = useState(false)
   const [openMobileDates, setOpenMobileDates] = useState(false)
+  const [minPrice, setMinPrice] = useState("")
+  const [maxPrice, setMaxPrice] = useState("")
+  const [showPriceFilter, setShowPriceFilter] = useState(false)
 
   const checkIn = dateRange?.from
   const checkOut = dateRange?.to
@@ -72,6 +75,8 @@ export function HeroSection() {
     if (checkIn) params.set('checkIn', format(checkIn, 'yyyy-MM-dd'))
     if (checkOut) params.set('checkOut', format(checkOut, 'yyyy-MM-dd'))
     if (guests > 1) params.set('guests', String(guests))
+    if (minPrice) params.set('minPrice', minPrice)
+    if (maxPrice) params.set('maxPrice', maxPrice)
     router.push(`/?${params.toString()}`)
   }
 
@@ -291,6 +296,53 @@ export function HeroSection() {
               <Search className="h-5 w-5" />
               <span>Search</span>
             </Button>
+          </div>
+
+          {/* Price filter row (all breakpoints) */}
+          <div className="mt-3 pt-3 border-t border-border">
+            <div className="flex items-center gap-2">
+              <button
+                className="text-xs font-semibold text-muted-foreground hover:text-foreground flex items-center gap-1"
+                onClick={() => setShowPriceFilter(v => !v)}
+              >
+                Price range {showPriceFilter ? '▲' : '▼'}
+              </button>
+              {showPriceFilter && (
+                <div className="flex items-center gap-2 flex-1">
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Min $</span>
+                    <Input
+                      type="number"
+                      placeholder="0"
+                      value={minPrice}
+                      onChange={e => setMinPrice(e.target.value)}
+                      className="h-8 text-xs"
+                      min="0"
+                    />
+                  </div>
+                  <span className="text-muted-foreground text-xs">—</span>
+                  <div className="flex items-center gap-1.5 flex-1">
+                    <span className="text-xs text-muted-foreground whitespace-nowrap">Max $</span>
+                    <Input
+                      type="number"
+                      placeholder="Any"
+                      value={maxPrice}
+                      onChange={e => setMaxPrice(e.target.value)}
+                      className="h-8 text-xs"
+                      min="0"
+                    />
+                  </div>
+                  {(minPrice || maxPrice) && (
+                    <button
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                      onClick={() => { setMinPrice(''); setMaxPrice('') }}
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>

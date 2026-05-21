@@ -3,6 +3,8 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import { ThemeProvider } from '@/components/theme-provider'
 import { Toaster } from '@/components/ui/sonner'
 import Providers from '@/app/providers'
+import { MobileNav } from '@/components/MobileNav'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import './globals.css'
 
 const _geist = Geist({ subsets: ['latin'] })
@@ -33,10 +35,13 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
       </head>
-      <body className="font-sans antialiased">
+      <body className="font-sans antialiased pb-16 md:pb-0">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <Providers>
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
+            <MobileNav />
             <Toaster richColors closeButton />
           </Providers>
         </ThemeProvider>

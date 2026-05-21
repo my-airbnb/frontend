@@ -151,4 +151,23 @@ export const useDeleteListing = () => {
   })
 }
 
+export const useListingsByIds = (ids: string[]) => {
+  return useQuery({
+    queryKey: ['listings-by-ids', ids],
+    queryFn: async (): Promise<Listing[]> => {
+      if (ids.length === 0) return []
+      const results = await Promise.all(
+        ids.map(id =>
+          apiClient.get<Listing>(`/listings/${id}`)
+            .then(r => r.data)
+            .catch(() => null)
+        )
+      )
+      return results.filter((l): l is Listing => l !== null)
+    },
+    enabled: ids.length > 0,
+    staleTime: 5 * 60 * 1000,
+  })
+}
+
 export default useListings
