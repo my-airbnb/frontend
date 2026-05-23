@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useListing } from '@/hooks/useListings'
 import { useListingReviews, useReviewStats } from '@/hooks/useReviews'
+import type { Listing, Review, ReviewStats } from '@/types'
 import { useGetUserByEmail } from '@/hooks/useAuth'
 import { useSendMessage } from '@/hooks/useChat'
 import { useBookings } from '@/hooks/useBookings'
@@ -30,14 +31,17 @@ const AMENITY_ICONS: Record<string, string> = {
 
 interface Props {
   id: string
+  initialListing?: Listing
+  initialReviews?: Review[]
+  initialReviewStats?: ReviewStats
 }
 
-export default function ListingDetailClient({ id }: Props) {
+export default function ListingDetailClient({ id, initialListing, initialReviews, initialReviewStats }: Props) {
   const router = useRouter()
   const { user } = useAuthStore()
-  const { data: listing, isLoading, error } = useListing(id)
-  const { data: reviews, isLoading: reviewsLoading } = useListingReviews(id)
-  const { data: reviewStats } = useReviewStats('LISTING', id)
+  const { data: listing, isLoading, error } = useListing(id, initialListing)
+  const { data: reviews, isLoading: reviewsLoading } = useListingReviews(id, initialReviews)
+  const { data: reviewStats } = useReviewStats('LISTING', id, initialReviewStats)
   const { data: myBookings } = useBookings()
   const { mutateAsync: sendMessage, isPending: startingChat } = useSendMessage()
   const { data: hostUser, isLoading: hostLoading } = useGetUserByEmail(listing?.hostId ?? '')

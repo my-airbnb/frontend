@@ -8,6 +8,7 @@ import { Loader2, ChevronLeft, ChevronRight } from "lucide-react"
 import ListingCard from "@/components/ListingCard"
 import { useListingsInfinite } from "@/hooks/useListings"
 import { ListingFilters } from "@/types"
+import type { ListingsPage } from "@/lib/server-api"
 
 const MapView = dynamic(() => import('@/components/MapView'), { ssr: false })
 
@@ -17,9 +18,10 @@ interface PropertyGridProps {
   city?: string
   title?: string
   layout?: 'horizontal' | 'vertical'
+  initialData?: ListingsPage
 }
 
-export function PropertyGrid({ city: cityProp, title, layout = 'horizontal' }: PropertyGridProps = {}) {
+export function PropertyGrid({ city: cityProp, title, layout = 'horizontal', initialData: initialDataProp }: PropertyGridProps = {}) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
@@ -37,6 +39,10 @@ export function PropertyGrid({ city: cityProp, title, layout = 'horizontal' }: P
     type: searchParams.get('type') || undefined,
   }), [cityProp, searchParams])
 
+  const infiniteInitialData = initialDataProp
+    ? { pages: [initialDataProp], pageParams: [0] }
+    : undefined
+
   const {
     data,
     isLoading,
@@ -45,7 +51,7 @@ export function PropertyGrid({ city: cityProp, title, layout = 'horizontal' }: P
     hasNextPage,
     isFetchingNextPage,
     refetch,
-  } = useListingsInfinite(filters)
+  } = useListingsInfinite(filters, infiniteInitialData)
 
   const allListings = data?.pages.flatMap((p) => p.content) ?? []
   const totalElements = data?.pages[0]?.totalElements ?? 0

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/axios'
 import { Review, CreateReviewPayload, ReviewStats } from '@/types'
 
-export const useListingReviews = (listingId: string) => {
+export const useListingReviews = (listingId: string, initialData?: Review[]) => {
   return useQuery({
     queryKey: ['reviews', 'listing', listingId],
     queryFn: async ({ signal }): Promise<Review[]> => {
@@ -10,6 +10,7 @@ export const useListingReviews = (listingId: string) => {
       return Array.isArray(response.data) ? response.data : []
     },
     enabled: !!listingId,
+    initialData,
   })
 }
 
@@ -27,7 +28,7 @@ export const useCreateReview = () => {
   })
 }
 
-export const useReviewStats = (targetType: 'LISTING' | 'EXPERIENCE', targetId: string) => {
+export const useReviewStats = (targetType: 'LISTING' | 'EXPERIENCE', targetId: string, initialData?: ReviewStats) => {
   const basePath = targetType === 'LISTING' ? 'listing' : 'experience'
   return useQuery({
     queryKey: ['review-stats', targetType, targetId],
@@ -41,5 +42,6 @@ export const useReviewStats = (targetType: 'LISTING' | 'EXPERIENCE', targetId: s
     enabled: !!targetId,
     staleTime: 5 * 60 * 1000,
     gcTime: 30 * 60 * 1000,
+    initialData,
   })
 }

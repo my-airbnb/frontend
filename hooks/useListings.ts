@@ -60,7 +60,7 @@ export const useCreateListing = () => {
   })
 }
 
-export const useListing = (id: string) => {
+export const useListing = (id: string, initialData?: Listing) => {
   return useQuery({
     queryKey: ['listing', id],
     queryFn: async ({ signal }) => {
@@ -68,6 +68,7 @@ export const useListing = (id: string) => {
       return response.data
     },
     enabled: !!id,
+    initialData,
   })
 }
 
@@ -93,7 +94,10 @@ export const useListingSearch = (query: string, enabled = true) => {
   })
 }
 
-export const useListingsInfinite = (filters?: ListingFilters) => {
+export const useListingsInfinite = (
+  filters?: ListingFilters,
+  initialData?: { pages: ListingsPage[]; pageParams: number[] },
+) => {
   return useInfiniteQuery<ListingsPage>({
     queryKey: ['listings-infinite', filters],
     queryFn: async ({ pageParam, signal }) => {
@@ -110,6 +114,7 @@ export const useListingsInfinite = (filters?: ListingFilters) => {
     getNextPageParam: (lastPage) =>
       lastPage.number < lastPage.totalPages - 1 ? lastPage.number + 1 : undefined,
     initialPageParam: 0,
+    initialData,
   })
 }
 
