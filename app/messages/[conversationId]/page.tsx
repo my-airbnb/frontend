@@ -82,7 +82,7 @@ export default function ConversationPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-4 h-screen flex flex-col">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-28 md:pb-4 h-screen flex flex-col">
       {/* Header */}
       <div className="flex items-center gap-4 pb-4 border-b border-border">
         <Button variant="ghost" size="icon" asChild>
