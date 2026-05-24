@@ -22,6 +22,7 @@ interface BookingWidgetProps {
 }
 
 const SERVICE_FEE_RATE = 0.12
+const MAX_STAY_NIGHTS = 30
 
 const BookingWidget = ({ listing }: BookingWidgetProps) => {
   const router = useRouter()
@@ -60,6 +61,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
     if (!isAuthenticated) { router.push('/login'); return }
     if (!startDate || !endDate) { toast.error('Please select check-in and check-out dates.'); return }
     if (nights <= 0) { toast.error('Check-out must be after check-in.'); return }
+    if (nights > MAX_STAY_NIGHTS) { toast.error(`Maximum stay is ${MAX_STAY_NIGHTS} nights.`); return }
     if (guests < 1 || guests > listing.maxGuests) { toast.error(`Guests must be between 1 and ${listing.maxGuests}.`); return }
 
     try {
@@ -113,7 +115,16 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
               mode="range"
               selected={dateRange}
               onSelect={setDateRange}
-              disabled={(date) => date < new Date() || blockedDateStrings.has(date.toDateString())}
+              disabled={(date) => {
+                if (date < new Date()) return true
+                if (blockedDateStrings.has(date.toDateString())) return true
+                if (startDate && !endDate) {
+                  const maxDate = new Date(startDate)
+                  maxDate.setDate(maxDate.getDate() + MAX_STAY_NIGHTS)
+                  if (date > maxDate) return true
+                }
+                return false
+              }}
               numberOfMonths={1}
             />
           </PopoverContent>

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect, useMemo, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Search, CalendarDays, Users, MapPin, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -14,6 +14,8 @@ import { useListingSearch } from "@/hooks/useListings"
 
 export function HeroSection() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const cityInputRef = useRef<HTMLInputElement>(null)
   const [city, setCity] = useState("")
   const [debouncedCity, setDebouncedCity] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
@@ -33,6 +35,18 @@ export function HeroSection() {
     const timer = setTimeout(() => setDebouncedCity(city.trim()), 300)
     return () => clearTimeout(timer)
   }, [city])
+
+  // Auto-focus city input when navigated from header search
+  useEffect(() => {
+    if (searchParams.get('focus') === 'search') {
+      cityInputRef.current?.focus()
+      cityInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      const params = new URLSearchParams(searchParams.toString())
+      params.delete('focus')
+      const qs = params.toString()
+      router.replace(qs ? `/?${qs}` : '/', { scroll: false })
+    }
+  }, [searchParams, router])
 
   // Fetch suggestions from Elasticsearch
   const { data: searchResults, isLoading: isSearching } = useListingSearch(
@@ -123,6 +137,7 @@ export function HeroSection() {
               <div className="rounded-xl bg-secondary/50 px-4 py-3">
                 <Label className="text-xs font-semibold text-foreground">Where</Label>
                 <Input
+                  ref={cityInputRef}
                   placeholder="Search destinations"
                   value={city}
                   onChange={(e) => { setCity(e.target.value); setShowSuggestions(true) }}

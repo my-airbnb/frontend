@@ -23,7 +23,7 @@ interface ListingMapProps {
 
 export default function ListingMap({ lat, lng, title, address }: ListingMapProps) {
   return (
-    <div className="rounded-2xl overflow-hidden h-64 border border-border">
+    <div className="rounded-2xl overflow-hidden h-64 border border-border isolate">
       <MapContainer center={[lat, lng]} zoom={14} style={{ height: '100%', width: '100%' }} scrollWheelZoom={false}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

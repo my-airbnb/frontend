@@ -79,7 +79,7 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
   const photos = listing.photos?.length > 0 ? listing.photos : [PLACEHOLDER_IMAGE]
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-28 lg:pb-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-48 lg:pb-8">
       <Button variant="ghost" size="sm" className="mb-6" asChild>
         <Link href="/"><ArrowLeft className="mr-2 h-4 w-4" />All stays</Link>
       </Button>
@@ -231,7 +231,7 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
       </div>
 
       {/* Mobile sticky booking bar */}
-      <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-card border-t border-border px-4 py-3 flex items-center justify-between" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+      <div className="lg:hidden fixed bottom-[88px] inset-x-0 z-40 bg-card border-t border-b border-border px-4 py-3 flex items-center justify-between rounded-t-2xl shadow-lg">
         <div>
           <span className="text-xl font-bold">${listing.pricePerNight}</span>
           <span className="text-muted-foreground text-sm"> / night</span>
