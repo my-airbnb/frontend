@@ -8,6 +8,18 @@ const nextConfig = {
       { protocol: 'https', hostname: 'airbb.serghini.me' },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: 'https://airbb.serghini.me/api/v1/:path*',
+      },
+      {
+        source: '/ws/:path*',
+        destination: 'https://airbb.serghini.me/ws/:path*',
+      },
+    ]
+  },
   async headers() {
     return [
       {
