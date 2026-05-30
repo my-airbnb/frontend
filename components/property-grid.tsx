@@ -19,14 +19,19 @@ interface PropertyGridProps {
   title?: string
   layout?: 'horizontal' | 'vertical'
   initialData?: ListingsPage
+  /** Eager-load the first few images (above-the-fold rows only). */
+  eager?: boolean
 }
 
-export function PropertyGrid({ city: cityProp, title, layout = 'horizontal', initialData: initialDataProp }: PropertyGridProps = {}) {
+export function PropertyGrid({ city: cityProp, title, layout = 'horizontal', initialData: initialDataProp, eager = false }: PropertyGridProps = {}) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const scrollRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<(HTMLDivElement | null)[]>([])
-  const [prioritySet, setPrioritySet] = useState<Set<number>>(new Set([0, 1, 2]))
+  // Only above-the-fold rows eager-load their first cards. Below-the-fold rows
+  // start empty (native lazy-load) so the home page doesn't fire ~18 concurrent
+  // cold image transcodes at once; the IntersectionObserver promotes them on scroll.
+  const [prioritySet, setPrioritySet] = useState<Set<number>>(() => eager ? new Set([0, 1, 2]) : new Set())
   const [hoveredId, setHoveredId] = useState<string | null>(null)
 
   const filters: ListingFilters = useMemo(() => ({

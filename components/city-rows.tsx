@@ -20,7 +20,7 @@ export function HomeListings({ initialCities, topPicksInitialData, cityInitialDa
 
   return (
     <>
-      <PropertyGrid title="Top picks for you →" initialData={topPicksInitialData} />
+      <PropertyGrid title="Top picks for you →" initialData={topPicksInitialData} eager />
       {initialCities.map((city) => (
         <PropertyGrid key={city} city={city} initialData={cityInitialData[city]} />
       ))}
