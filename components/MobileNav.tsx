@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import { Search, Heart, CalendarDays, MessageSquare, User } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import useWishlistStore from '@/store/wishlistStore'
+import { useHasHydrated } from '@/hooks/useHasHydrated'
 
 const navItems = [
   { href: '/', label: 'Explore', icon: Search, exact: true },
@@ -16,8 +17,9 @@ const navItems = [
 
 export function MobileNav() {
   const pathname = usePathname()
+  const hasHydrated = useHasHydrated()
   const { getItems } = useWishlistStore()
-  const wishlistCount = getItems().length
+  const wishlistCount = hasHydrated ? getItems().length : 0
 
   return (
     <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden bg-card/95 backdrop-blur-sm border border-border shadow-2xl rounded-full">
