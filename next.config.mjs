@@ -2,18 +2,13 @@
 const nextConfig = {
   output: 'standalone',
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: 'a0.muscache.com' },
-      { protocol: 'https', hostname: 'images.unsplash.com' },
-      { protocol: 'https', hostname: 'airbb.serghini.me' },
-    ],
-    // Serve modern formats — much smaller than JPEG for the same quality.
-    formats: ['image/avif', 'image/webp'],
-    // Keep optimized images in the on-disk cache for 31 days instead of the
-    // 60s default, so a given source image is only fetched + transcoded once.
-    // Combined with the persistent .next/cache/images volume, this means an
-    // image survives pod restarts / ArgoCD deploys instead of going cold again.
-    minimumCacheTTL: 2678400,
+    // Custom loader rewrites listing photos to CDN-resized URLs (see
+    // lib/imageLoader.ts): Airbnb muscache /im/?aki_policy and Unsplash native
+    // params. The browser fetches the small (~40 KB) image straight from the
+    // CDN, bypassing the on-node optimizer — no 15 MB downloads, no transcode
+    // load on the single node, and fast for the very first visitor.
+    loader: 'custom',
+    loaderFile: './lib/imageLoader.ts',
   },
   async rewrites() {
     return [
