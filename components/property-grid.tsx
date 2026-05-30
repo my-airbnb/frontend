@@ -174,7 +174,7 @@ export function PropertyGrid({ city: cityProp, title, layout = 'horizontal', ini
                     onMouseEnter={() => setHoveredId(listing.id)}
                     onMouseLeave={() => setHoveredId(null)}
                   >
-                    <ListingCard listing={listing} priority={index < 6} />
+                    <ListingCard listing={listing} priority={index < 3} />
                   </div>
                 ))}
               </div>
