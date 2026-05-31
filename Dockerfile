@@ -1,5 +1,5 @@
 # ---- Build Stage ----
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci --legacy-peer-deps
@@ -19,7 +19,7 @@ ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=$NEXT_PUBLIC_GOOGLE_CLIENT_ID
 RUN npm run build
 
 # ---- CI Runtime (uses pre-built standalone from CI runner — no npm in Docker) ----
-FROM node:20-alpine AS ci-runtime
+FROM node:22-alpine AS ci-runtime
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY .next/standalone ./
@@ -32,7 +32,7 @@ ENV HOSTNAME="0.0.0.0"
 CMD ["node", "server.js"]
 
 # ---- Default Run Stage (used by local docker build) ----
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
