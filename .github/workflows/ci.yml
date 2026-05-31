@@ -16,6 +16,7 @@ on:
       - 'next.config.mjs'
       - '.github/workflows/ci.yml'
       - '.dockerignore'
+      - '.trivyignore'
   pull_request:
     branches: [ main, develop ]
     paths:
