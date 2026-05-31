@@ -1,6 +1,10 @@
 # postcss moderate CVE inside next.js internals
 GHSA-qx2v-qp2m-jg93
 
+# picomatch ReDoS inside next.js compiled dist (node_modules/next/dist/compiled/picomatch)
+# not a direct dependency; fix requires a Next.js upstream release
+CVE-2026-33671
+
 # tar/cross-spawn/glob/minimatch CVEs in npm's own bundled packages - not fixable from app level
 CVE-2026-23745
 CVE-2026-23950
