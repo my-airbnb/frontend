@@ -58,7 +58,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
 
   const handleReserve = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!isAuthenticated) { router.push('/login'); return }
+    if (!isAuthenticated) { router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`); return }
     if (!startDate || !endDate) { toast.error('Please select check-in and check-out dates.'); return }
     if (nights <= 0) { toast.error('Check-out must be after check-in.'); return }
     if (nights > MAX_STAY_NIGHTS) { toast.error(`Maximum stay is ${MAX_STAY_NIGHTS} nights.`); return }

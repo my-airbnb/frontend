@@ -42,14 +42,18 @@ export const useGetUserByEmail = (email: string) => {
 export const useBecomeHost = () => {
   const { setAuth } = useAuthStore()
   return useMutation({
-    mutationFn: async (): Promise<User> => {
-      const response = await apiClient.post<User>('/auth/become-host')
+    mutationFn: async (): Promise<AuthResponse> => {
+      // Backend now returns a fresh AuthResponse with a HOST-role JWT so the
+      // new role is immediately usable without re-login (H1 fix).
+      const response = await apiClient.post<AuthResponse>('/auth/become-host')
       return response.data
     },
-    onSuccess: (updatedUser) => {
-      const { token, refreshToken } = useAuthStore.getState()
-      if (!token) return
-      setAuth(updatedUser, token, refreshToken ?? undefined)
+    onSuccess: async (authResponse) => {
+      // Fetch the updated user profile with the new token
+      const userRes = await apiClient.get<User>('/auth/me', {
+        headers: { Authorization: `Bearer ${authResponse.accessToken}` },
+      })
+      setAuth(userRes.data, authResponse.accessToken, authResponse.refreshToken)
     },
   })
 }

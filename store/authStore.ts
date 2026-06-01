@@ -39,12 +39,25 @@ const useAuthStore = create<AuthState>()(
       setAuth: (user: User, token: string, refreshToken?: string) => {
         set({ user, token, refreshToken: refreshToken ?? null, isAuthenticated: true })
         setSessionCookie()
+        // H5: ensure wishlist store knows the active user so the heart toggle works
+        // immediately after login without requiring a dashboard visit first.
+        // Dynamic require avoids the circular import (wishlistStore imports nothing from here).
+        if (typeof window !== 'undefined') {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { default: useWishlistStore } = require('@/store/wishlistStore')
+          useWishlistStore.getState().setactiveUser(user.id)
+        }
       },
 
       clearAuth: () => {
         set({ user: null, token: null, refreshToken: null, isAuthenticated: false })
         clearAuthStorage()
         clearSessionCookie()
+        if (typeof window !== 'undefined') {
+          // eslint-disable-next-line @typescript-eslint/no-require-imports
+          const { default: useWishlistStore } = require('@/store/wishlistStore')
+          useWishlistStore.getState().setactiveUser(null)
+        }
       },
     }),
     {

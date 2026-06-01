@@ -168,17 +168,23 @@ export default function NewListingPage() {
     try {
       let lat = 0
       let lng = 0
+      let geocoded = false
       try {
         const geoRes = await fetch(
-          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${formData.address}, ${formData.city}, ${formData.country}`)}&format=json&limit=1`
+          `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(`${formData.address}, ${formData.city}, ${formData.country}`)}&format=json&limit=1`,
+          { signal: AbortSignal.timeout(5000) }
         )
         const geoData = await geoRes.json()
         if (geoData?.[0]) {
           lat = parseFloat(geoData[0].lat)
           lng = parseFloat(geoData[0].lon)
+          geocoded = true
         }
       } catch {
-        // geocoding is best-effort
+        // M3: geocoding is best-effort but warn the host so they know map pin may be wrong
+      }
+      if (!geocoded) {
+        toast('Could not determine exact location — map pin may be inaccurate. You can update it later.', { duration: 6000 })
       }
 
       await createListing({

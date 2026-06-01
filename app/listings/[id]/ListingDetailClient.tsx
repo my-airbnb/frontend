@@ -50,7 +50,9 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
 
   const handleContactHost = async () => {
     if (!listing) return
-    if (!user) { router.push('/login'); return }
+    if (!user) { router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`); return }
+    // M4: prevent a host from messaging themselves
+    if (user.email === listing.hostId) { toast.error("You can't message yourself."); return }
     try {
       const res = await sendMessage({ recipientEmail: listing.hostId, listingId: listing.id, content: `Hi! I'm interested in ${listing.title}.` })
       if (res.conversationId) {

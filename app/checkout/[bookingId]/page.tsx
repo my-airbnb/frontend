@@ -82,7 +82,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (!hasHydrated) return
-    if (!isAuthenticated) { router.push('/login'); return }
+    if (!isAuthenticated) { router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`); return }
     if (!booking) return
     createPaymentIntent({ bookingId, amount: booking.totalPrice })
       .then((res) => { setClientSecret(res.clientSecret); setAmount(res.amount) })

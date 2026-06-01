@@ -203,7 +203,7 @@ function RegisterForm() {
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{' '}
-              <Link href="/login" className="text-primary font-medium hover:underline">
+              <Link href={`/login${redirect !== '/' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`} className="text-primary font-medium hover:underline">
                 Sign in
               </Link>
             </p>
