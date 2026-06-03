@@ -15,12 +15,18 @@ const AUTH_STORAGE_KEYS = ['auth-storage']
 
 function setSessionCookie() {
   if (typeof document === 'undefined') return
-  document.cookie = 'auth-session=1; Path=/; SameSite=Strict; Max-Age=86400'
+  // SameSite=Lax (not Strict): a Strict cookie is NOT sent on a top-level
+  // navigation that originates from another site — e.g. when Stripe redirects
+  // back to /dashboard after 3-D Secure. The middleware that gates /dashboard
+  // and /checkout then sees no cookie and bounces the user to /login (which,
+  // for a Google user, re-prompts Google sign-in). Lax is sent on top-level
+  // GET navigations including that return, while still blocking cross-site POST.
+  document.cookie = 'auth-session=1; Path=/; SameSite=Lax; Max-Age=86400'
 }
 
 function clearSessionCookie() {
   if (typeof document === 'undefined') return
-  document.cookie = 'auth-session=; Path=/; SameSite=Strict; Max-Age=0'
+  document.cookie = 'auth-session=; Path=/; SameSite=Lax; Max-Age=0'
 }
 
 function clearAuthStorage() {
