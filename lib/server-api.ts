@@ -2,6 +2,17 @@ import type { Listing, Review, ReviewStats } from '@/types'
 
 const LISTING_URL = process.env.LISTING_SERVICE_URL ?? 'http://service-listing:8082'
 const REVIEW_URL = process.env.REVIEW_SERVICE_URL ?? 'http://service-review:8086'
+const SUGGESTION_URL = process.env.SUGGESTION_SERVICE_URL ?? 'http://service-suggestion:8087'
+
+export interface Suggestion {
+  id: string
+  city: string
+  type: string
+  price: number
+  title: string
+  photo: string
+  reason: string
+}
 
 export interface ListingsPage {
   content: Listing[]
@@ -55,4 +66,11 @@ export async function serverFetchReviews(listingId: string): Promise<Review[]> {
 
 export async function serverFetchReviewStats(listingId: string): Promise<ReviewStats | null> {
   return safeFetch<ReviewStats>(`${REVIEW_URL}/api/v1/reviews/listing/${listingId}/stats`)
+}
+
+export async function serverFetchSuggestions(listingId: string, limit = 8): Promise<Suggestion[]> {
+  const data = await safeFetch<Suggestion[]>(
+    `${SUGGESTION_URL}/api/v1/suggestions/listing/${listingId}?limit=${limit}`,
+  )
+  return Array.isArray(data) ? data : []
 }

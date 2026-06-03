@@ -2,7 +2,13 @@ import type { Metadata } from 'next'
 import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 import ListingDetailClient from './ListingDetailClient'
-import { serverFetchListing, serverFetchReviews, serverFetchReviewStats } from '@/lib/server-api'
+import SimilarStays from '@/components/SimilarStays'
+import {
+  serverFetchListing,
+  serverFetchReviews,
+  serverFetchReviewStats,
+  serverFetchSuggestions,
+} from '@/lib/server-api'
 
 export async function generateMetadata({
   params,
@@ -30,10 +36,11 @@ export default async function ListingDetailPage({
 }) {
   const { id } = await params
 
-  const [listing, reviews, reviewStats] = await Promise.all([
+  const [listing, reviews, reviewStats, suggestions] = await Promise.all([
     serverFetchListing(id),
     serverFetchReviews(id),
     serverFetchReviewStats(id),
+    serverFetchSuggestions(id),
   ])
 
   return (
@@ -46,6 +53,9 @@ export default async function ListingDetailPage({
           initialReviews={reviews}
           initialReviewStats={reviewStats ?? undefined}
         />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+          <SimilarStays suggestions={suggestions} />
+        </div>
       </main>
       <Footer />
     </div>
