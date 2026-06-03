@@ -47,7 +47,7 @@ export default function RecommendedForYou() {
       <p className="text-sm text-muted-foreground mb-4">
         {user ? 'Based on stays guests like you booked' : 'Most-booked places on Airbnb'}
       </p>
-      <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
         {suggestions.map((s) => (
           <SuggestionCard key={s.id} suggestion={s} />
         ))}

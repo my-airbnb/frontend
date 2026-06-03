@@ -15,7 +15,7 @@ export default function SimilarStays({ suggestions }: { suggestions: Suggestion[
     <section className="mt-12 border-t border-border pt-8">
       <h2 className="text-xl font-semibold text-foreground mb-1">Similar stays</h2>
       <p className="text-sm text-muted-foreground mb-4">Places guests also booked</p>
-      <div className="flex gap-4 overflow-x-auto pb-2 -mx-1 px-1">
+      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
         {suggestions.map((s) => (
           <SuggestionCard key={s.id} suggestion={s} />
         ))}

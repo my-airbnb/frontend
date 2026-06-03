@@ -171,3 +171,12 @@
   transform: scale(1.15);
   z-index: 1000;
 }
+
+/* Horizontal carousels (suggestion strips): keep scroll/swipe, hide the bar */
+.no-scrollbar {
+  -ms-overflow-style: none;   /* IE/Edge */
+  scrollbar-width: none;      /* Firefox */
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;              /* Chrome/Safari */
+}
