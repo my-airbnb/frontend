@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { Star, Clock, Users, Loader2 } from 'lucide-react'
+import { Clock, Users, Loader2, Search, X } from 'lucide-react'
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/lib/axios'
 import { cn } from '@/lib/utils'
@@ -32,6 +32,7 @@ function formatDuration(minutes?: number) {
 
 export default function ExperiencesSection() {
   const [activeCategory, setActiveCategory] = useState('all')
+  const [searchQuery, setSearchQuery] = useState('')
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
 
   const { data: experiences = [], isLoading, isError } = useQuery({
@@ -43,14 +44,41 @@ export default function ExperiencesSection() {
     staleTime: 5 * 60 * 1000,
   })
 
-  const filtered = experiences.filter(
-    (exp) => activeCategory === 'all' || exp.category?.toLowerCase() === activeCategory,
-  )
+  const q = searchQuery.trim().toLowerCase()
+  const filtered = experiences.filter((exp) => {
+    const matchesCategory = activeCategory === 'all' || exp.category?.toLowerCase() === activeCategory
+    const matchesSearch =
+      !q ||
+      exp.title?.toLowerCase().includes(q) ||
+      exp.location?.toLowerCase().includes(q)
+    return matchesCategory && matchesSearch
+  })
 
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h2 className="text-2xl font-semibold text-foreground mb-1">Experiences</h2>
       <p className="text-sm text-muted-foreground mb-5">Unique activities hosted by locals around the world</p>
+
+      {/* Search bar */}
+      <div className="relative mb-5 max-w-xl">
+        <Search className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder="Search experiences by name or city…"
+          className="w-full rounded-full border border-border bg-card py-3 pl-11 pr-10 text-sm text-foreground shadow-sm outline-none focus:border-foreground focus:ring-1 focus:ring-foreground"
+        />
+        {searchQuery && (
+          <button
+            onClick={() => setSearchQuery('')}
+            aria-label="Clear search"
+            className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-muted-foreground hover:bg-muted"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
+      </div>
 
       {/* Category chips */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-6">
@@ -77,7 +105,9 @@ export default function ExperiencesSection() {
       ) : isError ? (
         <p className="py-16 text-center text-muted-foreground">Could not load experiences. Please try again.</p>
       ) : filtered.length === 0 ? (
-        <p className="py-16 text-center text-muted-foreground">No experiences in this category yet.</p>
+        <p className="py-16 text-center text-muted-foreground">
+          {q ? `No experiences match “${searchQuery.trim()}”.` : 'No experiences in this category yet.'}
+        </p>
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-8">
           {filtered.map((exp) => (
