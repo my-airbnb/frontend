@@ -130,11 +130,6 @@ export function Header({ showSearch = true }: { showSearch?: boolean } = {}) {
                       Host your place
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/experiences" className="w-full">
-                      Experiences
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onClick={logout}
@@ -155,9 +150,6 @@ export function Header({ showSearch = true }: { showSearch?: boolean } = {}) {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link href="/host/new-listing" className="w-full">Host your place</Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/experiences" className="w-full">Experiences</Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="https://help.airbnb.com" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 w-full">
