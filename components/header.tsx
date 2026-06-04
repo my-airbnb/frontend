@@ -17,7 +17,7 @@ import useAuthStore from "@/store/authStore"
 import useAuth from "@/hooks/useAuth"
 import { useHasHydrated } from "@/hooks/useHasHydrated"
 
-export function Header() {
+export function Header({ showSearch = true }: { showSearch?: boolean } = {}) {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const { logout } = useAuth()
@@ -40,29 +40,33 @@ export function Header() {
           </span>
         </Link>
 
-        {/* Search Bar - Desktop */}
-        <div className="hidden md:flex items-center rounded-full border border-border bg-card px-2 py-1 shadow-sm hover:shadow-md cursor-pointer" onClick={() => router.push('/?focus=search')}>
-          <span className="px-4 py-2 text-sm font-medium text-foreground">
-            Anywhere
-          </span>
-          <span className="h-6 w-px bg-border" />
-          <span className="px-4 py-2 text-sm font-medium text-foreground">
-            Any week
-          </span>
-          <span className="h-6 w-px bg-border" />
-          <span className="px-4 py-2 text-sm text-muted-foreground">
-            Add guests
-          </span>
-          <Button size="icon" className="h-8 w-8 rounded-full">
-            <Search className="h-4 w-4" />
-          </Button>
-        </div>
+        {/* Search Bar - Desktop (hidden where a dedicated page search exists, e.g. home) */}
+        {showSearch && (
+          <div className="hidden md:flex items-center rounded-full border border-border bg-card px-2 py-1 shadow-sm hover:shadow-md cursor-pointer" onClick={() => router.push('/?focus=search')}>
+            <span className="px-4 py-2 text-sm font-medium text-foreground">
+              Anywhere
+            </span>
+            <span className="h-6 w-px bg-border" />
+            <span className="px-4 py-2 text-sm font-medium text-foreground">
+              Any week
+            </span>
+            <span className="h-6 w-px bg-border" />
+            <span className="px-4 py-2 text-sm text-muted-foreground">
+              Add guests
+            </span>
+            <Button size="icon" className="h-8 w-8 rounded-full">
+              <Search className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* Mobile Search */}
-        <Button variant="outline" size="sm" className="md:hidden rounded-full px-3" onClick={() => router.push('/?focus=search')}>
-          <Search className="h-4 w-4 mr-2" />
-          <span className="text-sm">Search</span>
-        </Button>
+        {showSearch && (
+          <Button variant="outline" size="sm" className="md:hidden rounded-full px-3" onClick={() => router.push('/?focus=search')}>
+            <Search className="h-4 w-4 mr-2" />
+            <span className="text-sm">Search</span>
+          </Button>
+        )}
 
         {/* Right Section */}
         <div className="flex items-center gap-1">

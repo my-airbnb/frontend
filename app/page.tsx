@@ -3,6 +3,7 @@ import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { HomeListings } from "@/components/city-rows"
 import RecommendedForYou from "@/components/RecommendedForYou"
+import HomeShell from "@/components/HomeShell"
 import { Footer } from "@/components/footer"
 import { serverFetchCities, serverFetchListingsPage } from "@/lib/server-api"
 import type { ListingsPage } from "@/lib/server-api"
@@ -30,17 +31,24 @@ export default async function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
+      {/* Hide the header search pill on home — the hero search below is the single search */}
+      <Header showSearch={false} />
       <main className="flex-1">
-        <HeroSection />
-        <RecommendedForYou />
-        <Suspense fallback={<div className="py-16 text-center text-muted-foreground">Loading listings...</div>}>
-          <HomeListings
-            initialCities={selectedCities}
-            topPicksInitialData={topPicks ?? undefined}
-            cityInitialData={cityInitialData}
-          />
-        </Suspense>
+        <HomeShell
+          staysSlot={
+            <>
+              <HeroSection />
+              <RecommendedForYou />
+              <Suspense fallback={<div className="py-16 text-center text-muted-foreground">Loading listings...</div>}>
+                <HomeListings
+                  initialCities={selectedCities}
+                  topPicksInitialData={topPicks ?? undefined}
+                  cityInitialData={cityInitialData}
+                />
+              </Suspense>
+            </>
+          }
+        />
       </main>
       <Footer />
     </div>
