@@ -21,6 +21,12 @@ export function MobileNav() {
   const { getItems } = useWishlistStore()
   const wishlistCount = hasHydrated ? getItems().length : 0
 
+  // On a listing detail page the full-width sticky Reserve bar owns the bottom of
+  // the screen — showing the floating nav pill on top of it looks cluttered.
+  if (pathname.startsWith('/listings/')) {
+    return null
+  }
+
   return (
     <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 md:hidden bg-card/95 backdrop-blur-sm border border-border shadow-2xl rounded-full">
       <div className="flex items-center h-14 px-1">
