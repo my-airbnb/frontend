@@ -66,27 +66,29 @@ export default function PhotoGallery({ photos, title }: PhotoGalleryProps) {
         </button>
       </div>
 
-      {/* Desktop: grid */}
-      <div className="hidden md:grid relative grid-cols-2 gap-2 rounded-2xl overflow-hidden max-h-[500px]">
-        <div className="relative row-span-2 col-span-1 cursor-pointer group" onClick={() => openLightbox(0)}>
-          <Image src={photos[0]} alt={title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="50vw" priority />
+      {/* Desktop: single photo fills the full width; multiple photos use the grid */}
+      {photos.length === 1 ? (
+        <div
+          className="hidden md:block relative rounded-2xl overflow-hidden aspect-[16/9] max-h-[500px] cursor-pointer group"
+          onClick={() => openLightbox(0)}
+        >
+          <Image src={photos[0]} alt={title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="100vw" priority />
         </div>
-        {photos.slice(1, 5).map((photo, i) => (
-          <div key={i} className="relative aspect-[4/3] cursor-pointer group" onClick={() => openLightbox(i + 1)}>
-            <Image src={photo} alt={`${title} photo ${i + 2}`} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="25vw" />
+      ) : (
+        <div className="hidden md:grid relative grid-cols-2 gap-2 rounded-2xl overflow-hidden max-h-[500px]">
+          <div className="relative row-span-2 col-span-1 cursor-pointer group" onClick={() => openLightbox(0)}>
+            <Image src={photos[0]} alt={title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="50vw" priority />
           </div>
-        ))}
-        {photos.length === 1 && (
-          <>
-            <div className="relative aspect-[4/3] bg-muted" /><div className="relative aspect-[4/3] bg-muted" />
-          </>
-        )}
-        {photos.length > 1 && (
+          {photos.slice(1, 5).map((photo, i) => (
+            <div key={i} className="relative aspect-[4/3] cursor-pointer group" onClick={() => openLightbox(i + 1)}>
+              <Image src={photo} alt={`${title} photo ${i + 2}`} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="25vw" />
+            </div>
+          ))}
           <button onClick={() => openLightbox(0)} className="absolute bottom-4 right-4 bg-card border border-border text-foreground text-sm font-medium px-4 py-2 rounded-xl shadow-md hover:bg-muted transition-colors flex items-center gap-2">
             <LayoutGrid className="h-4 w-4" />Show all {photos.length} photos
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Lightbox */}
       {lightboxOpen && (

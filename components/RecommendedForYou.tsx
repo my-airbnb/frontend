@@ -39,13 +39,18 @@ export default function RecommendedForYou() {
 
   if (!loaded || suggestions.length === 0) return null
 
+  // Only call it "personalized" when the results actually come from the user's
+  // own stay history (reason="collaborative"). Otherwise it's the popular
+  // fallback — labelling that "based on your stays" would be misleading.
+  const isPersonalized = suggestions.some((s) => s.reason === 'collaborative')
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h2 className="text-2xl font-semibold text-foreground mb-1">
-        {user ? 'Recommended for you' : 'Popular right now'}
+        {isPersonalized ? 'Recommended for you' : 'Popular right now'}
       </h2>
       <p className="text-sm text-muted-foreground mb-4">
-        {user ? 'Based on stays guests like you booked' : 'Most-booked places on Airbnb'}
+        {isPersonalized ? 'Based on stays guests like you booked' : 'Most-booked places on Airbnb'}
       </p>
       <div className="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-1 px-1">
         {suggestions.map((s) => (
