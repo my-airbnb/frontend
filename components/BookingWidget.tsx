@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { useCreateBooking, useBlockedDates } from '@/hooks/useBookings'
+import { useUnavailableDates } from '@/hooks/useAvailability'
 import { useReviewStats } from '@/hooks/useReviews'
 import useAuthStore from '@/store/authStore'
 import { Listing } from '@/types'
@@ -29,6 +30,7 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
   const { isAuthenticated } = useAuthStore()
   const { mutateAsync: createBooking, isPending } = useCreateBooking()
   const { data: blockedRanges = [] } = useBlockedDates(listing.id)
+  const { data: hostBlockedDates = [] } = useUnavailableDates(listing.id)
   const { data: reviewStats } = useReviewStats('LISTING', listing.id)
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>()
@@ -53,8 +55,14 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
         current.setDate(current.getDate() + 1)
       }
     })
+    // Merge in dates the host manually blocked (ISO "yyyy-MM-dd", parsed as local
+    // so they line up with the calendar's local Date objects).
+    hostBlockedDates.forEach((iso) => {
+      const [y, m, d] = iso.split('-').map(Number)
+      if (y && m && d) dateSet.add(new Date(y, m - 1, d).toDateString())
+    })
     return dateSet
-  }, [blockedRanges])
+  }, [blockedRanges, hostBlockedDates])
 
   const handleReserve = async (e: React.FormEvent) => {
     e.preventDefault()
