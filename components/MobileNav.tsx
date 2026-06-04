@@ -21,10 +21,12 @@ export function MobileNav() {
   const { getItems } = useWishlistStore()
   const wishlistCount = hasHydrated ? getItems().length : 0
 
-  // Hide the floating nav on focused/standalone flows: a listing detail (the
-  // full-width Reserve bar owns the bottom), auth screens, checkout, and the
-  // host listing wizard (multi-step forms need the full screen).
-  const hideOn = ['/login', '/register', '/checkout', '/host']
+  // Hide the floating nav on focused/standalone flows where another control owns
+  // the bottom of the screen or needs the full height: a listing detail (Reserve
+  // bar), a chat conversation (message input), auth screens, checkout, and the
+  // host listing wizard. Note the trailing slash on /messages/ so the inbox list
+  // (/messages) keeps the nav — only an open conversation hides it.
+  const hideOn = ['/login', '/register', '/checkout', '/host', '/messages/']
   if (pathname.startsWith('/listings/') || hideOn.some((p) => pathname.startsWith(p))) {
     return null
   }
