@@ -16,14 +16,23 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import useAuthStore from "@/store/authStore"
+import useWishlistStore from "@/store/wishlistStore"
 import useAuth from "@/hooks/useAuth"
 import { useHasHydrated } from "@/hooks/useHasHydrated"
+import { useEffect } from "react"
 
 export function Header({ showSearch = true }: { showSearch?: boolean } = {}) {
   const router = useRouter()
   const { user, isAuthenticated } = useAuthStore()
   const { logout } = useAuth()
   const hydrated = useHasHydrated()
+  const setWishlistUser = useWishlistStore((s) => s.setactiveUser)
+
+  // Present on every page — guarantees the wishlist syncs from the backend on
+  // load for an authenticated user, even on pages without listing cards.
+  useEffect(() => {
+    if (user?.id) setWishlistUser(user.id)
+  }, [user?.id, setWishlistUser])
 
   const initials = user
     ? `${user.firstName?.[0] ?? ''}${user.lastName?.[0] ?? ''}`.toUpperCase()
