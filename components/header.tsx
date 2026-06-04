@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Search, Menu, User, LogOut, LayoutDashboard, Settings, Shield, Circle as HelpCircle } from "lucide-react"
 import { Logo } from "@/components/Logo"
+import { NotificationBell } from "@/components/NotificationBell"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -69,6 +70,8 @@ export function Header({ showSearch = true }: { showSearch?: boolean } = {}) {
               Host your place
             </Button>
           </Link>
+
+          <NotificationBell />
 
           <ThemeToggle />
 
