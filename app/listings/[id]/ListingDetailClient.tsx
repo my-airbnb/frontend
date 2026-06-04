@@ -148,27 +148,29 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
             </div>
           </div>
 
-          {/* Highlights */}
-          <div className="space-y-4 pb-6 border-b border-border">
-            {listing.instantBook && (
-              <div className="flex items-start gap-4">
-                <span className="text-2xl">⚡</span>
-                <div>
-                  <p className="font-medium">Instant Book</p>
-                  <p className="text-sm text-muted-foreground">Book without waiting for the host to respond.</p>
+          {/* Highlights — only render when there is at least one to show */}
+          {(listing.instantBook || listing.amenities?.some((a) => a.toLowerCase() === 'self_check_in')) && (
+            <div className="space-y-4 pb-6 border-b border-border">
+              {listing.instantBook && (
+                <div className="flex items-start gap-4">
+                  <span className="text-2xl">⚡</span>
+                  <div>
+                    <p className="font-medium">Instant Book</p>
+                    <p className="text-sm text-muted-foreground">Book without waiting for the host to respond.</p>
+                  </div>
                 </div>
-              </div>
-            )}
-            {listing.amenities?.some((a) => a.toLowerCase() === 'self_check_in') && (
-              <div className="flex items-start gap-4">
-                <span className="text-2xl">🔑</span>
-                <div>
-                  <p className="font-medium">Self check-in</p>
-                  <p className="text-sm text-muted-foreground">Check yourself in with the lockbox.</p>
+              )}
+              {listing.amenities?.some((a) => a.toLowerCase() === 'self_check_in') && (
+                <div className="flex items-start gap-4">
+                  <span className="text-2xl">🔑</span>
+                  <div>
+                    <p className="font-medium">Self check-in</p>
+                    <p className="text-sm text-muted-foreground">Check yourself in with the lockbox.</p>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Description */}
           <div className="pb-6 border-b border-border">

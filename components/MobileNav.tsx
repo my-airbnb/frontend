@@ -21,9 +21,11 @@ export function MobileNav() {
   const { getItems } = useWishlistStore()
   const wishlistCount = hasHydrated ? getItems().length : 0
 
-  // On a listing detail page the full-width sticky Reserve bar owns the bottom of
-  // the screen — showing the floating nav pill on top of it looks cluttered.
-  if (pathname.startsWith('/listings/')) {
+  // Hide the floating nav on focused/standalone flows: a listing detail (the
+  // full-width Reserve bar owns the bottom), auth screens, checkout, and the
+  // host listing wizard (multi-step forms need the full screen).
+  const hideOn = ['/login', '/register', '/checkout', '/host']
+  if (pathname.startsWith('/listings/') || hideOn.some((p) => pathname.startsWith(p))) {
     return null
   }
 
