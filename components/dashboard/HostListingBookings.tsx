@@ -40,7 +40,7 @@ export function HostListingBookings({ listingId, listingTitle }: { listingId: st
             <p className="text-sm mb-3">{booking.nbGuests} guest{booking.nbGuests !== 1 ? 's' : ''} · <span className="font-semibold">${booking.totalPrice}</span></p>
             {booking.status === 'PENDING' && (
               <div className="flex gap-2">
-                <Button size="sm" className="flex-1 bg-green-600 hover:bg-green-700" onClick={() => confirm(booking.id, { onSuccess: () => toast.success('Booking confirmed!') })} disabled={isConfirming || isRejecting}>
+                <Button size="sm" className="flex-1" onClick={() => confirm(booking.id, { onSuccess: () => toast.success('Booking confirmed!') })} disabled={isConfirming || isRejecting}>
                   <Check className="h-3.5 w-3.5 mr-1" />Approve
                 </Button>
                 <Button size="sm" variant="destructive" className="flex-1" onClick={() => reject(booking.id, { onSuccess: () => toast.success('Booking rejected.') })} disabled={isConfirming || isRejecting}>

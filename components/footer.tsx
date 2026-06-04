@@ -1,5 +1,6 @@
 import Link from "next/link"
-import { Home, Globe } from "lucide-react"
+import { Globe } from "lucide-react"
+import { Logo } from "@/components/Logo"
 
 const footerLinks = {
   support: [
@@ -100,12 +101,7 @@ export function Footer() {
         {/* Bottom Section */}
         <div className="flex flex-col gap-4 border-t border-border py-6 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:gap-6">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary">
-                <Home className="h-4 w-4 text-primary-foreground" />
-              </div>
-              <span className="font-semibold text-foreground">Airbnb</span>
-            </div>
+            <Logo href={null} />
             <p className="text-sm text-muted-foreground">
               © 2026 Airbnb, Inc. · Privacy · Terms · Sitemap
             </p>

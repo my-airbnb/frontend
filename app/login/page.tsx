@@ -3,7 +3,8 @@
 import { Suspense, useState } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Hop as Home, Mail, Lock, CircleAlert as AlertCircle, Loader as Loader2 } from 'lucide-react'
+import { Mail, Lock, CircleAlert as AlertCircle, Loader as Loader2 } from 'lucide-react'
+import { Logo } from '@/components/Logo'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,12 +39,7 @@ function LoginForm() {
         <Card>
           <CardHeader className="pb-4">
             <div className="flex justify-center mb-6">
-              <Link href="/" className="flex items-center gap-2">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary">
-                  <Home className="h-6 w-6 text-primary-foreground" />
-                </div>
-                <span className="text-2xl font-bold text-foreground">Airbnb</span>
-              </Link>
+              <Logo size="lg" />
             </div>
             <h1 className="text-2xl font-bold text-foreground text-center">Welcome back</h1>
             <p className="text-muted-foreground text-center text-sm mt-1">

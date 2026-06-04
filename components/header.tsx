@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-import { Search, Menu, User, Hop as Home, LogOut, LayoutDashboard, Settings, Shield, Circle as HelpCircle } from "lucide-react"
+import { Search, Menu, User, LogOut, LayoutDashboard, Settings, Shield, Circle as HelpCircle } from "lucide-react"
+import { Logo } from "@/components/Logo"
 import { Button } from "@/components/ui/button"
 import {
   DropdownMenu,
@@ -31,14 +32,7 @@ export function Header({ showSearch = true }: { showSearch?: boolean } = {}) {
     <header className="sticky top-0 z-50 w-full border-b border-border bg-card/95 backdrop-blur-sm supports-[backdrop-filter]:bg-card/80">
       <div className="container mx-auto flex h-14 items-center justify-between px-4 lg:h-16 lg:px-8">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary lg:h-9 lg:w-9">
-            <Home className="h-4 w-4 text-primary-foreground lg:h-5 lg:w-5" />
-          </div>
-          <span className="hidden text-lg font-semibold tracking-tight text-foreground sm:inline-block lg:text-xl">
-            Airbnb
-          </span>
-        </Link>
+        <Logo responsiveWordmark />
 
         {/* Search Bar - Desktop (hidden where a dedicated page search exists, e.g. home) */}
         {showSearch && (
