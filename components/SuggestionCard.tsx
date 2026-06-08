@@ -12,20 +12,23 @@ const BLUR_DATA_URL =
 
 function SuggestionCard({ suggestion }: { suggestion: Suggestion }) {
   const [imgError, setImgError] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
   const photoUrl = suggestion.photo && !imgError ? suggestion.photo : PLACEHOLDER_IMAGE
 
   return (
     <Link href={`/listings/${suggestion.id}`} className="group block w-44 flex-shrink-0">
       <div className="relative w-full aspect-square rounded-2xl overflow-hidden bg-muted">
+        {!imgLoaded && <div className="absolute inset-0 img-shimmer" />}
         <Image
           src={photoUrl}
           alt={suggestion.title}
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          className={`object-cover transition-all duration-300 group-hover:scale-105 ${imgLoaded ? 'opacity-100' : 'opacity-0'}`}
           sizes="176px"
           placeholder="blur"
           blurDataURL={BLUR_DATA_URL}
-          onError={() => setImgError(true)}
+          onLoad={() => setImgLoaded(true)}
+          onError={() => { setImgError(true); setImgLoaded(true) }}
         />
       </div>
       <div className="mt-2">

@@ -20,6 +20,7 @@ interface ListingCardProps {
 
 const ListingCard = React.memo(function ListingCard({ listing, priority = false }: ListingCardProps) {
   const [imgError, setImgError] = useState(false)
+  const [imgLoaded, setImgLoaded] = useState(false)
   const { user } = useAuthStore()
   const { toggle, isWishlisted, setactiveUser } = useWishlistStore()
 
@@ -37,16 +38,21 @@ const ListingCard = React.memo(function ListingCard({ listing, priority = false 
     <Link href={`/listings/${listing.id}`} className="group block">
       <div className="relative">
         <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden bg-muted">
+          {!imgLoaded && <div className="absolute inset-0 img-shimmer" />}
           <Image
             src={photoUrl}
             alt={listing.title}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className={cn(
+              'object-cover transition-all duration-300 group-hover:scale-105',
+              imgLoaded ? 'opacity-100' : 'opacity-0',
+            )}
             sizes="(max-width: 640px) 192px, 220px"
             priority={priority}
             placeholder="blur"
             blurDataURL={BLUR_DATA_URL}
-            onError={() => setImgError(true)}
+            onLoad={() => setImgLoaded(true)}
+            onError={() => { setImgError(true); setImgLoaded(true) }}
           />
           <button
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(listing.id) }}

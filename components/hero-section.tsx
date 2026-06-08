@@ -16,7 +16,8 @@ export function HeroSection() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const cityInputRef = useRef<HTMLInputElement>(null)
-  const [city, setCity] = useState("")
+  // Pre-fill from the active search so the box keeps the city across reload/back.
+  const [city, setCity] = useState(() => searchParams.get('city') ?? "")
   const [debouncedCity, setDebouncedCity] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
   const [dateRange, setDateRange] = useState<DateRange | undefined>()

@@ -14,6 +14,7 @@ export default function PhotoGallery({ photos, title }: PhotoGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState(0)
   const [mobilePhotoIndex, setMobilePhotoIndex] = useState(0)
+  const [heroLoaded, setHeroLoaded] = useState(false)
 
   const openLightbox = useCallback((index: number) => {
     setLightboxIndex(index)
@@ -47,7 +48,8 @@ export default function PhotoGallery({ photos, title }: PhotoGalleryProps) {
     <>
       {/* Mobile: swipeable */}
       <div className="md:hidden relative rounded-2xl overflow-hidden aspect-[4/3]">
-        <Image src={photos[mobilePhotoIndex]} alt={title} fill className="object-cover" sizes="100vw" priority />
+        {!heroLoaded && <div className="absolute inset-0 img-shimmer" />}
+        <Image src={photos[mobilePhotoIndex]} alt={title} fill className={`object-cover transition-opacity duration-300 ${heroLoaded ? 'opacity-100' : 'opacity-0'}`} sizes="100vw" priority onLoad={() => setHeroLoaded(true)} onError={() => setHeroLoaded(true)} />
         {photos.length > 1 && (
           <>
             <button onClick={() => setMobilePhotoIndex((i) => (i - 1 + photos.length) % photos.length)} className="absolute left-3 top-1/2 -translate-y-1/2 p-2 bg-background/90 rounded-full shadow-md">
@@ -72,12 +74,14 @@ export default function PhotoGallery({ photos, title }: PhotoGalleryProps) {
           className="hidden md:block relative rounded-2xl overflow-hidden aspect-[16/9] max-h-[500px] cursor-pointer group"
           onClick={() => openLightbox(0)}
         >
-          <Image src={photos[0]} alt={title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="100vw" priority />
+          {!heroLoaded && <div className="absolute inset-0 img-shimmer" />}
+          <Image src={photos[0]} alt={title} fill className={`object-cover transition-all duration-300 group-hover:scale-105 ${heroLoaded ? 'opacity-100' : 'opacity-0'}`} sizes="100vw" priority onLoad={() => setHeroLoaded(true)} onError={() => setHeroLoaded(true)} />
         </div>
       ) : (
         <div className="hidden md:grid relative grid-cols-2 gap-2 rounded-2xl overflow-hidden max-h-[500px]">
           <div className="relative row-span-2 col-span-1 cursor-pointer group" onClick={() => openLightbox(0)}>
-            <Image src={photos[0]} alt={title} fill className="object-cover transition-transform duration-300 group-hover:scale-105" sizes="50vw" priority />
+            {!heroLoaded && <div className="absolute inset-0 img-shimmer" />}
+            <Image src={photos[0]} alt={title} fill className={`object-cover transition-all duration-300 group-hover:scale-105 ${heroLoaded ? 'opacity-100' : 'opacity-0'}`} sizes="50vw" priority onLoad={() => setHeroLoaded(true)} onError={() => setHeroLoaded(true)} />
           </div>
           {photos.slice(1, 5).map((photo, i) => (
             <div key={i} className="relative aspect-[4/3] cursor-pointer group" onClick={() => openLightbox(i + 1)}>

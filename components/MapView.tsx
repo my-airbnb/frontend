@@ -65,7 +65,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
       if (markersRef.current.has(listing.id)) return
       const icon = L.divIcon({
         className: '',
-        html: `<div class="map-price-pin">€${Math.round(listing.pricePerNight)}</div>`,
+        html: `<div class="map-price-pin">$${Math.round(listing.pricePerNight)}</div>`,
         iconAnchor: [28, 16],
       })
       const marker = L.marker([listing.lat, listing.lng], { icon })
@@ -74,7 +74,7 @@ export default function MapView({ listings, hoveredId }: MapViewProps) {
         <div style="min-width:160px">
           <img src="${listing.photos?.[0] ?? ''}" style="width:100%;height:90px;object-fit:cover;border-radius:6px;margin-bottom:6px" />
           <div style="font-weight:600;font-size:13px;line-height:1.3">${listing.title}</div>
-          <div style="color:#666;font-size:12px;margin-top:2px">€${listing.pricePerNight}/night</div>
+          <div style="color:#666;font-size:12px;margin-top:2px">$${listing.pricePerNight}/night</div>
         </div>
       `, { maxWidth: 200 })
       markersRef.current.set(listing.id, marker)

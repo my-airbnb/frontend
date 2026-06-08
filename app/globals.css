@@ -173,6 +173,25 @@
   z-index: 1000;
 }
 
+/* Image loading shimmer — shown behind images until they load */
+.img-shimmer {
+  background: linear-gradient(
+    100deg,
+    var(--muted) 30%,
+    color-mix(in oklab, var(--muted) 60%, var(--background)) 50%,
+    var(--muted) 70%
+  );
+  background-size: 200% 100%;
+  animation: img-shimmer 1.3s ease-in-out infinite;
+}
+@keyframes img-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .img-shimmer { animation: none; }
+}
+
 /* Horizontal carousels (suggestion strips): keep scroll/swipe, hide the bar */
 .no-scrollbar {
   -ms-overflow-style: none;   /* IE/Edge */
