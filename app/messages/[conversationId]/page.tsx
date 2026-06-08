@@ -82,9 +82,9 @@ export default function ConversationPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] h-screen flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-4 pb-4 border-b border-border">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 pb-[max(1rem,env(safe-area-inset-bottom))] h-[100dvh] flex flex-col overflow-hidden">
+      {/* Header — fixed top */}
+      <div className="flex items-center gap-4 pb-4 border-b border-border shrink-0">
         <Button variant="ghost" size="icon" asChild>
           <Link href="/messages"><ArrowLeft className="h-5 w-5" /></Link>
         </Button>
@@ -123,8 +123,8 @@ export default function ConversationPage() {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input */}
-      <div className="pt-4 border-t border-border">
+      {/* Input — fixed bottom, never scrolls */}
+      <div className="pt-4 border-t border-border shrink-0">
         <form onSubmit={handleSend} className="flex gap-2">
           <Input
             value={newMessage}
