@@ -11,6 +11,7 @@ import { useCreatePaymentIntent } from '@/hooks/usePayments'
 import { useBookingById } from '@/hooks/useBookings'
 import { useListing } from '@/hooks/useListings'
 import CheckoutForm from '@/components/CheckoutForm'
+import PromoCode from '@/components/PromoCode'
 import useAuthStore from '@/store/authStore'
 import { useHasHydrated } from '@/hooks/useHasHydrated'
 import { getApiErrorMessage } from '@/lib/api-utils'
@@ -22,11 +23,12 @@ import Image from 'next/image'
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_placeholder')
 
-function BookingSummary({ bookingId }: { bookingId: string }) {
+function BookingSummary({ bookingId, discount = 0 }: { bookingId: string; discount?: number }) {
   const { data: booking } = useBookingById(bookingId)
   const { data: listing } = useListing(booking?.listingId ?? '')
   if (!booking) return null
   const formatDate = (d: string) => { try { return format(parseISO(d), 'MMM dd, yyyy') } catch { return d } }
+  const finalTotal = Math.max(0, booking.totalPrice - discount)
 
   return (
     <Card className="mb-6">
@@ -58,9 +60,21 @@ function BookingSummary({ bookingId }: { bookingId: string }) {
           <span>{booking.nbGuests} {booking.nbGuests === 1 ? 'guest' : 'guests'}</span>
         </div>
         <Separator />
+        {discount > 0 && (
+          <>
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>Subtotal</span>
+              <span>${booking.totalPrice.toLocaleString()}</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span>Promo discount</span>
+              <span>-${discount.toLocaleString()}</span>
+            </div>
+          </>
+        )}
         <div className="flex justify-between font-semibold">
           <span>Total</span>
-          <span>${booking.totalPrice.toLocaleString()}</span>
+          <span>${finalTotal.toLocaleString()}</span>
         </div>
       </CardContent>
     </Card>
@@ -79,16 +93,26 @@ export default function CheckoutPage() {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [amount, setAmount] = useState<number>(0)
   const [error, setError] = useState<string | null>(null)
+  const [discount, setDiscount] = useState<number>(0)
+  const [appliedCode, setAppliedCode] = useState<string | null>(null)
+
+  const effectiveTotal = booking ? Math.max(0, booking.totalPrice - discount) : 0
 
   useEffect(() => {
     if (!hasHydrated) return
     if (!isAuthenticated) { router.push(`/login?redirect=${encodeURIComponent(window.location.pathname)}`); return }
     if (!booking) return
-    createPaymentIntent({ bookingId, amount: booking.totalPrice })
+    createPaymentIntent({ bookingId, amount: effectiveTotal })
       .then((res) => { setClientSecret(res.clientSecret); setAmount(res.amount) })
       .catch((err) => setError(getApiErrorMessage(err, 'Failed to initialize payment')))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bookingId, booking?.totalPrice, isAuthenticated, hasHydrated])
+  }, [bookingId, booking?.totalPrice, discount, isAuthenticated, hasHydrated])
+
+  const handleApplyCode = (code: string | null, value: number) => {
+    setClientSecret(null) // re-issue the payment intent at the new amount
+    setAppliedCode(code)
+    setDiscount(code ? value : 0)
+  }
 
   if (error) return (
     <div className="max-w-lg mx-auto px-4 py-20 text-center">
@@ -99,7 +123,7 @@ export default function CheckoutPage() {
     </div>
   )
 
-  if (!clientSecret) return (
+  if (!booking) return (
     <div className="flex flex-col items-center justify-center min-h-screen">
       <Loader2 className="h-10 w-10 animate-spin text-primary mb-4" />
       <p className="text-muted-foreground">Loading secure checkout...</p>
@@ -124,13 +148,21 @@ export default function CheckoutPage() {
           </div>
         </div>
 
-        <BookingSummary bookingId={bookingId} />
+        <BookingSummary bookingId={bookingId} discount={discount} />
+
+        <PromoCode amount={booking.totalPrice} appliedCode={appliedCode} onApply={handleApplyCode} />
 
         <Card>
           <CardContent className="p-6">
-            <Elements options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#000000' } } }} stripe={stripePromise}>
-              <CheckoutForm bookingId={bookingId} clientSecret={clientSecret} amount={amount} />
-            </Elements>
+            {clientSecret ? (
+              <Elements options={{ clientSecret, appearance: { theme: 'stripe', variables: { colorPrimary: '#000000' } } }} stripe={stripePromise}>
+                <CheckoutForm bookingId={bookingId} clientSecret={clientSecret} amount={amount} />
+              </Elements>
+            ) : (
+              <div className="flex items-center justify-center py-10">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
