@@ -3,7 +3,7 @@
 import { useEffect } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
-import { MapPin, Users, Star, ArrowLeft, CircleCheck as CheckCircle, Bed, Bath, Loader as Loader2 } from 'lucide-react'
+import { MapPin, Users, Star, ArrowLeft, CircleCheck as CheckCircle, Bed, Bath, Loader as Loader2, BookOpen } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { useListing } from '@/hooks/useListings'
@@ -13,6 +13,7 @@ import { useGetUserByEmail } from '@/hooks/useAuth'
 import { useSendMessage } from '@/hooks/useChat'
 import { useBookings } from '@/hooks/useBookings'
 import { useRecordView } from '@/hooks/useRecentlyViewed'
+import { useGuidebook } from '@/hooks/useGuidebook'
 import BookingWidget from '@/components/BookingWidget'
 import PhotoGallery from '@/components/listing/PhotoGallery'
 import ReviewsSection from '@/components/listing/ReviewsSection'
@@ -48,6 +49,7 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
   const { mutateAsync: sendMessage, isPending: startingChat } = useSendMessage()
   const { data: hostUser, isLoading: hostLoading } = useGetUserByEmail(listing?.hostId ?? '')
   const recordView = useRecordView()
+  const { data: guidebook = [] } = useGuidebook(id)
 
   // Record this view (for the "Continue exploring" row) when logged in.
   useEffect(() => {
@@ -222,6 +224,32 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
               </div>
             </div>
           </div>
+
+          {/* Host's guidebook */}
+          {guidebook.length > 0 && (
+            <div className="pb-6 border-b border-border">
+              <h3 className="text-xl font-semibold mb-1 flex items-center gap-2">
+                <BookOpen className="h-5 w-5" />
+                Host&apos;s guidebook
+              </h3>
+              <p className="text-muted-foreground text-sm mb-4">Local tips from your host</p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {guidebook.map((tip) => (
+                  <div key={tip.id} className="rounded-xl border border-border p-4">
+                    {tip.category && (
+                      <span className="inline-block text-xs uppercase tracking-wide text-muted-foreground mb-1">
+                        {tip.category}
+                      </span>
+                    )}
+                    <p className="font-medium">{tip.title}</p>
+                    {tip.description && (
+                      <p className="text-sm text-muted-foreground mt-1 whitespace-pre-line">{tip.description}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Location */}
           <div>
