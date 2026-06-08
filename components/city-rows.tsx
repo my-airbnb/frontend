@@ -14,18 +14,25 @@ interface HomeListingsProps {
 export function HomeListings({ initialCities, topPicksInitialData, cityInitialData }: HomeListingsProps) {
   const searchParams = useSearchParams()
   const cityParam = searchParams.get('city')
-  const hasAnySearch = cityParam || searchParams.get('type') || searchParams.get('checkIn')
+  const typeParam = searchParams.get('type')
+  const checkInParam = searchParams.get('checkIn')
+  const hasAnySearch = cityParam || typeParam || checkInParam
   const resultsRef = useRef<HTMLDivElement>(null)
+  const firstRender = useRef(true)
 
-  // After a search, smoothly bring the results box into view (instead of the
-  // page jumping to the top). Re-runs when the searched city changes.
+  // Smooth-scroll to the results ONLY when the user performs a new search —
+  // not on initial load/refresh (where the URL may already carry ?city=...).
   useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
     if (hasAnySearch) {
       requestAnimationFrame(() =>
         resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
       )
     }
-  }, [hasAnySearch, cityParam, searchParams])
+  }, [cityParam, typeParam, checkInParam, hasAnySearch])
 
   if (hasAnySearch) {
     return (
