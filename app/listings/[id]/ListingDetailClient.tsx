@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { MapPin, Users, Star, ArrowLeft, CircleCheck as CheckCircle, Bed, Bath, Loader as Loader2 } from 'lucide-react'
@@ -11,6 +12,7 @@ import type { Listing, Review, ReviewStats } from '@/types'
 import { useGetUserByEmail } from '@/hooks/useAuth'
 import { useSendMessage } from '@/hooks/useChat'
 import { useBookings } from '@/hooks/useBookings'
+import { useRecordView } from '@/hooks/useRecentlyViewed'
 import BookingWidget from '@/components/BookingWidget'
 import PhotoGallery from '@/components/listing/PhotoGallery'
 import ReviewsSection from '@/components/listing/ReviewsSection'
@@ -45,6 +47,13 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
   const { data: myBookings } = useBookings()
   const { mutateAsync: sendMessage, isPending: startingChat } = useSendMessage()
   const { data: hostUser, isLoading: hostLoading } = useGetUserByEmail(listing?.hostId ?? '')
+  const recordView = useRecordView()
+
+  // Record this view (for the "Continue exploring" row) when logged in.
+  useEffect(() => {
+    if (user && id) recordView.mutate(id)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user?.id])
 
   const completedBooking = myBookings?.find((b) => b.listingId === id && b.status === 'COMPLETED')
 

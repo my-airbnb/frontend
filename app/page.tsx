@@ -3,6 +3,7 @@ import { Header } from "@/components/header"
 import { HeroSection } from "@/components/hero-section"
 import { HomeListings } from "@/components/city-rows"
 import RecommendedForYou from "@/components/RecommendedForYou"
+import RecentlyViewedRow from "@/components/RecentlyViewedRow"
 import HomeShell from "@/components/HomeShell"
 import { Footer } from "@/components/footer"
 import { serverFetchCities, serverFetchListingsPage } from "@/lib/server-api"
@@ -38,6 +39,7 @@ export default async function Home() {
           staysSlot={
             <>
               <HeroSection />
+              <RecentlyViewedRow />
               <RecommendedForYou />
               <Suspense fallback={<div className="py-16 text-center text-muted-foreground">Loading listings...</div>}>
                 <HomeListings
