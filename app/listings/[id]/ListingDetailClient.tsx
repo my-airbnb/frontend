@@ -14,6 +14,7 @@ import { useSendMessage } from '@/hooks/useChat'
 import { useBookings } from '@/hooks/useBookings'
 import { useRecordView } from '@/hooks/useRecentlyViewed'
 import { useGuidebook } from '@/hooks/useGuidebook'
+import QASection from '@/components/listing/QASection'
 import BookingWidget from '@/components/BookingWidget'
 import PhotoGallery from '@/components/listing/PhotoGallery'
 import ReviewsSection from '@/components/listing/ReviewsSection'
@@ -250,6 +251,9 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
               </div>
             </div>
           )}
+
+          {/* Questions & answers */}
+          <QASection listingId={id} hostId={listing.hostId} />
 
           {/* Location */}
           <div>
