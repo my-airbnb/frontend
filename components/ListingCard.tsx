@@ -30,6 +30,9 @@ const ListingCard = React.memo(function ListingCard({ listing, priority = false 
 
   const isFavorited = isWishlisted(listing.id)
   const { data: reviewStats } = useReviewStats('LISTING', listing.id)
+  // Highly-rated, well-reviewed places get an Airbnb-style "Guest favorite" badge.
+  const isGuestFavorite =
+    !!reviewStats && (reviewStats.totalReviews ?? 0) >= 5 && (reviewStats.averageRating ?? 0) >= 4.8
 
   const photoUrl =
     listing.photos?.length > 0 && !imgError ? listing.photos[0] : PLACEHOLDER_IMAGE
@@ -61,11 +64,15 @@ const ListingCard = React.memo(function ListingCard({ listing, priority = false 
           >
             <Heart className={cn('h-3.5 w-3.5', isFavorited ? 'fill-destructive text-destructive' : 'text-foreground')} />
           </button>
-          {listing.instantBook && (
+          {isGuestFavorite ? (
+            <span className="absolute top-2 left-2 bg-card text-[10px] font-bold px-2 py-0.5 rounded-full shadow">
+              Guest favorite
+            </span>
+          ) : listing.instantBook ? (
             <span className="absolute top-2 left-2 bg-card/90 text-[10px] font-semibold px-1.5 py-0.5 rounded-full shadow">
               Instant Book
             </span>
-          )}
+          ) : null}
         </div>
 
         <div className="mt-2">
@@ -76,7 +83,9 @@ const ListingCard = React.memo(function ListingCard({ listing, priority = false 
             <div className="flex items-center gap-0.5 flex-shrink-0">
               <Star className="h-3 w-3 fill-foreground text-foreground" />
               <span className="text-xs font-medium">
-                {reviewStats?.totalReviews ? reviewStats.averageRating?.toFixed(2) : 'New'}
+                {reviewStats?.totalReviews
+                  ? `${reviewStats.averageRating?.toFixed(1)} (${reviewStats.totalReviews})`
+                  : 'New'}
               </span>
             </div>
           </div>
