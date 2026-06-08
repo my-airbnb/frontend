@@ -91,7 +91,9 @@ export function HeroSection() {
     if (guests > 1) params.set('guests', String(guests))
     if (minPrice) params.set('minPrice', minPrice)
     if (maxPrice) params.set('maxPrice', maxPrice)
-    router.push(`/?${params.toString()}`)
+    // scroll:false keeps the page from jumping to the top — the results section
+    // scrolls itself smoothly into view (see HomeListings).
+    router.push(`/?${params.toString()}`, { scroll: false })
   }
 
   const suggestionsVisible = showSuggestions && (isSearching || citySuggestions.length > 0)
