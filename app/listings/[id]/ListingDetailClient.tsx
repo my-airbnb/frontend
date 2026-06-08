@@ -195,6 +195,25 @@ export default function ListingDetailClient({ id, initialListing, initialReviews
             </div>
           )}
 
+          {/* Things to know */}
+          <div className="pb-6 border-b border-border">
+            <h3 className="text-xl font-semibold mb-4">Things to know</h3>
+            <div className="grid sm:grid-cols-2 gap-6 text-sm">
+              <div>
+                <p className="font-medium mb-1">House rules</p>
+                <p className="text-muted-foreground whitespace-pre-line">
+                  {listing.houseRules?.trim() || 'Check-in after 3 PM · Checkout before 11 AM · No parties or events'}
+                </p>
+              </div>
+              <div>
+                <p className="font-medium mb-1">Cancellation policy</p>
+                <p className="text-muted-foreground">
+                  Free cancellation up to 48 hours before check-in. After that, the first night is non-refundable.
+                </p>
+              </div>
+            </div>
+          </div>
+
           {/* Location */}
           <div>
             <h3 className="text-xl font-semibold mb-4">Where you&apos;ll be</h3>

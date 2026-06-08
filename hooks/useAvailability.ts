@@ -1,6 +1,6 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/lib/axios'
 
 /**
@@ -19,5 +19,27 @@ export function useUnavailableDates(listingId: string) {
     },
     enabled: !!listingId,
     staleTime: 60_000,
+  })
+}
+
+/** Host: block one or more dates (ISO "yyyy-MM-dd") for a listing. */
+export function useBlockDates(listingId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (dates: string[]) => {
+      await apiClient.post(`/availability/listing/${listingId}/block`, { dates })
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['availability', listingId] }),
+  })
+}
+
+/** Host: free up previously blocked dates. */
+export function useUnblockDates(listingId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async (dates: string[]) => {
+      await apiClient.delete(`/availability/listing/${listingId}/block`, { data: { dates } })
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['availability', listingId] }),
   })
 }
