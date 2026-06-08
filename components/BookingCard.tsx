@@ -45,10 +45,20 @@ const BookingCard = ({ booking }: BookingCardProps) => {
   return (
     <Card className="hover:shadow-md transition-shadow">
       <CardContent className="p-5">
-        <div className="flex items-start justify-between mb-4">
-          <div>
-            <p className="text-xs text-muted-foreground">Booking ID</p>
-            <p className="text-sm font-mono font-medium">{booking.id.substring(0, 8)}...</p>
+        <div className="flex items-start gap-3 mb-4">
+          {booking.listingPhoto && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={booking.listingPhoto}
+              alt={booking.listingTitle || 'Listing'}
+              className="h-14 w-14 rounded-xl object-cover flex-shrink-0 bg-muted"
+            />
+          )}
+          <div className="min-w-0 flex-1">
+            <h3 className="text-sm font-semibold text-foreground truncate">
+              {booking.listingTitle || 'Booking'}
+            </h3>
+            <p className="text-xs font-mono text-muted-foreground">{booking.id.substring(0, 8)}…</p>
           </div>
           <Badge variant={statusVariant[booking.status] || 'secondary'}>
             {booking.status}
@@ -100,7 +110,7 @@ const BookingCard = ({ booking }: BookingCardProps) => {
 
           {(booking.status === 'COMPLETED' || booking.status === 'CONFIRMED') && !!booking.listingId && (
             alreadyReviewed ? (
-              <div className="w-full flex items-center justify-center gap-2 bg-green-50 border border-green-200 text-green-700 text-sm font-medium py-2 rounded-lg">
+              <div className="w-full flex items-center justify-center gap-2 bg-muted border border-border text-foreground text-sm font-medium py-2 rounded-lg">
                 <CheckCircle className="h-4 w-4" />
                 Review submitted
               </div>

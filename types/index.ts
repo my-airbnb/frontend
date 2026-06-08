@@ -41,6 +41,8 @@ export interface Booking {
   id: string
   guestId: string
   listingId: string
+  listingTitle?: string
+  listingPhoto?: string
   experienceId?: string
   type: 'LISTING' | 'EXPERIENCE'
   status: 'PENDING' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'REJECTED'
@@ -95,6 +97,8 @@ export interface ListingFilters {
 
 export interface CreateBookingPayload {
   listingId?: string
+  listingTitle?: string
+  listingPhoto?: string
   experienceId?: string
   type: 'LISTING' | 'EXPERIENCE'
   checkIn: string

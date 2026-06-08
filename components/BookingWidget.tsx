@@ -75,6 +75,8 @@ const BookingWidget = ({ listing }: BookingWidgetProps) => {
     try {
       const booking = await createBooking({
         listingId: listing.id,
+        listingTitle: listing.title,
+        listingPhoto: listing.photos?.[0],
         type: 'LISTING',
         checkIn: format(startDate, 'yyyy-MM-dd'),
         checkOut: format(endDate, 'yyyy-MM-dd'),
