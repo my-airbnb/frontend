@@ -6,3 +6,6 @@ node_modules/
 .DS_Store
 dist/
 build/
+
+# TS incremental build cache
+*.tsbuildinfo
